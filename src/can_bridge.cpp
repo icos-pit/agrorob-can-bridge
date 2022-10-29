@@ -11,7 +11,7 @@ class CanBridge : public rclcpp::Node
 {
   public:
     CanBridge()
-    : Node("can-bridge")
+    : Node("can_bridge")
     {
       can_subscription_ = this->create_subscription<can_msgs::msg::Frame>(
       "from_can_bus", 10, std::bind(&CanBridge::can_callback, this, _1));
