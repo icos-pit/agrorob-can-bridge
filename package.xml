@@ -1,14 +1,15 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>agrorob-can-bridge</name>
+  <name>agrorob_can_bridge</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
-  <maintainer email="iman@todo.todo">iman</maintainer>
+  <maintainer email="iman.esfandiyar71@gmail.com">iman</maintainer>
   <license>TODO: License declaration</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <depend>rclcpp</depend>
   <depend>can_msgs</depend>
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
