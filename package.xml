@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>agrorob_can_bridge</name>
+  <name>agrorob_interfaces</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
   <maintainer email="iman.esfandiyar71@gmail.com">iman</maintainer>
@@ -13,7 +13,7 @@
   <depend>can_msgs</depend>
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
-  <depend>agrorob_can_msgs</depend>
+  <depend>agrorob_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

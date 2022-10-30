@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(agrorob_can_bridge)
+project(agrorob_interfaces)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -11,7 +11,7 @@ find_package(rclcpp REQUIRED)
 find_package(can_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
-find_package(agrorob_can_msgs REQUIRED)
+find_package(agrorob_msgs REQUIRED)
 
 add_executable(can_bridge src/can_bridge.cpp)
 
@@ -26,7 +26,7 @@ target_include_directories(can_bridge PUBLIC
   "can_msgs"
   "std_msgs"
   "sensor_msgs"
-  "agrorob_can_msgs"
+  "agrorob_msgs"
 )
 target_compile_features(can_bridge PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 

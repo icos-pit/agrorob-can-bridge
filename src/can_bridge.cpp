@@ -8,7 +8,7 @@
 #include "can_msgs/msg/frame.hpp"
 
 
-#include "agrorob_can_msgs/msg/engine_state.hpp"
+#include "agrorob_msgs/msg/engine_state.hpp"
 // #include "agrorob_can_msgs/msg/failure_state.hpp"
 // #include "agrorob_can_msgs/msg/mode_control.hpp"
 // #include "agrorob_can_msgs/msg/robot_control.hpp"
@@ -29,7 +29,7 @@ class CanBridge : public rclcpp::Node
       raw_can_sub_ = this->create_subscription<can_msgs::msg::Frame>(
       "from_can_bus", 10, std::bind(&CanBridge::can_callback, this, _1));
 
-      engine_stats_pub_ = this->create_publisher<agrorob_can_msgs::msg::EngineState>("/agrorob/engine_state", 10);
+      engine_stats_pub_ = this->create_publisher<agrorob_msgs::msg::EngineState>("/agrorob/engine_state", 10);
 
 
     }
@@ -76,7 +76,7 @@ class CanBridge : public rclcpp::Node
       {
         case 51: 
         {
-          auto engine_state_message = agrorob_can_msgs::msg::EngineState();
+          auto engine_state_message = agrorob_msgs::msg::EngineState();
           engine_state_message.engine_coolant_temp_celsius = can_msg.data[3];
           engine_stats_pub_->publish(engine_state_message);
           RCLCPP_INFO(this->get_logger(), "I heard id: %u", can_msg.id);
@@ -91,15 +91,15 @@ class CanBridge : public rclcpp::Node
     }
     
     rclcpp::Subscription<can_msgs::msg::Frame>::SharedPtr raw_can_sub_;
-    rclcpp::Publisher<agrorob_can_msgs::msg::EngineState>::SharedPtr engine_stats_pub_; 
+    rclcpp::Publisher<agrorob_msgs::msg::EngineState>::SharedPtr engine_stats_pub_; 
     
-    // auto failure_state_message = agrorob_can_msgs::msg::FailureState();
-      // auto mode_control_message = agrorob_can_msgs::msg::ModeControl();
-      // auto robot_control_message = agrorob_can_msgs::msg::RobotControl();
-      // auto robot_state_message = agrorob_can_msgs::msg::RobotState();
-      // auto sprayer_control_message = agrorob_can_msgs::msg::SprayerControl();
-      // auto tool_control_message = agrorob_can_msgs::msg::ToolControl();
-      // auto tool_state_message = agrorob_can_msgs::msg::ToolState();
+    // auto failure_state_message = agrorob_msgs::msg::FailureState();
+      // auto mode_control_message = agrorob_msgs::msg::ModeControl();
+      // auto robot_control_message = agrorob_msgs::msg::RobotControl();
+      // auto robot_state_message = agrorob_msgs::msg::RobotState();
+      // auto sprayer_control_message = agrorob_msgs::msg::SprayerControl();
+      // auto tool_control_message = agrorob_msgs::msg::ToolControl();
+      // auto tool_state_message = agrorob_msgs::msg::ToolState();
     
    
     set<int> can_id_set;
