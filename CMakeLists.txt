@@ -13,24 +13,24 @@ find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(agrorob_msgs REQUIRED)
 
-add_executable(can_bridge src/can_bridge.cpp)
+add_executable(agrorob_interface src/agrorob_interface.cpp)
 
-target_link_libraries(can_bridge)
+target_link_libraries(agrorob_interface)
 
-target_include_directories(can_bridge PUBLIC
+target_include_directories(agrorob_interface PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
   ament_target_dependencies(
-  can_bridge
+    agrorob_interface
   "rclcpp"
   "can_msgs"
   "std_msgs"
   "sensor_msgs"
   "agrorob_msgs"
 )
-target_compile_features(can_bridge PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+target_compile_features(agrorob_interface PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 
-install(TARGETS can_bridge
+install(TARGETS agrorob_interface
   DESTINATION lib/${PROJECT_NAME})
 
 
