@@ -1,13 +1,10 @@
 #include <memory>
 #include <math.h>
 
-
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "can_msgs/msg/frame.hpp"
 #include "sensor_msgs/msg/joy.hpp"
-
-// #include "agrorob_interfaces/mode_manager.hpp"
 
 #include "agrorob_msgs/msg/engine_state.hpp"
 #include "agrorob_msgs/msg/failure_state.hpp"
@@ -17,16 +14,11 @@
 
 // #include "agrorob_msgs/msg/mode_control.hpp"
 // #include "agrorob_msgs/msg/robot_control.hpp"
-
 // #include "agrorob_msgs/msg/sprayer_control.hpp"
 // #include "agrorob_msgs/msg/tool_control.hpp"
 
-
 using namespace std;
 using std::placeholders::_1;
-
-
-
 
 class AgrorobInterface : public rclcpp::Node
 {
@@ -34,30 +26,26 @@ class AgrorobInterface : public rclcpp::Node
     AgrorobInterface() : Node("agrorob_interface")
     {
       raw_can_sub_ = this->create_subscription<can_msgs::msg::Frame>("from_can_bus", 10, std::bind(&AgrorobInterface::can_callback, this, _1));
-      
       joy_sub_ = this->create_subscription<sensor_msgs::msg::Joy>("joy", 10, std::bind(&AgrorobInterface::joy_callback, this, _1));
-
 
       remote_state_pub_ = this->create_publisher<agrorob_msgs::msg::RemoteState>("/agrorob/remote_state", 10);
       robot_state_pub_ = this->create_publisher<agrorob_msgs::msg::RobotState>("/agrorob/robot_state", 10);
       tool_stats_pub_ = this->create_publisher<agrorob_msgs::msg::ToolState>("/agrorob/tool_state", 10);
       engine_stats_pub_ = this->create_publisher<agrorob_msgs::msg::EngineState>("/agrorob/engine_state", 10);
       failure_state_pub_ = this->create_publisher<agrorob_msgs::msg::FailureState>("/agrorob/failure_state", 10);
-
       raw_can_pub_ = this->create_publisher<can_msgs::msg::Frame>("/to_can_bus", 10);
+
     }
 
     can_msgs::msg::Frame initialize_can_frame()
     {
       can_msgs::msg::Frame frame;
-      
       frame.header.frame_id = "can";
       frame.is_rtr = false;
       frame.is_extended = false;
       frame.is_error = false;
       frame.dlc = 8;
       return frame;
-
     }
 
   private:
@@ -65,8 +53,8 @@ class AgrorobInterface : public rclcpp::Node
     
     void joy_callback(const sensor_msgs::msg::Joy & joy_msg)
     {
-      
-      
+      can_id1.id = 1;
+      can_id25.id = 25;
 
       if(remote_state_msg.auto_mode_enabled == 1)
       {
@@ -82,10 +70,9 @@ class AgrorobInterface : public rclcpp::Node
           can_id1.data[6] = 0;
           can_id1.data[5] = 0;
           can_id1.data[4] = 0;
-          initializing = false;
         }
 
-        if(engine_state_msg.engine_running == 0)
+        if(engine_state_msg.engine_running == false)
           {
             if(initializing)
               RCLCPP_INFO(this->get_logger(), "Engine is off, click B (red) for ignition");
@@ -100,11 +87,10 @@ class AgrorobInterface : public rclcpp::Node
           }
 
 
-        if(engine_state_msg.engine_running == 1)
+        if(engine_state_msg.engine_running == true)
         {
-          if(initializing)
+          if(!agrorob_ready_to_move)
             RCLCPP_INFO(this->get_logger(), "Engine is running");
-
           can_id1.data[0] = 0;
           can_id1.data[1] = 0;
           can_id1.data[2] = 0;
@@ -112,57 +98,42 @@ class AgrorobInterface : public rclcpp::Node
           can_id1.data[4] = 0;
           can_id1.data[5] = 0;
           can_id1.data[7] = 0;
-          if(initializing)
+          if(!agrorob_ready_to_move)
             RCLCPP_INFO(this->get_logger(), "Agrorob ready to move");
           agrorob_ready_to_move = true;
         }
 
-
-        if(joy_msg.axes[2] > 0.9) //gear
+        if(joy_msg.axes[2] < -0.9) //gear
           can_id1.data[5] = 1;
         else
           can_id1.data[5] = 0;
         
-        if(joy_msg.axes[5] > 0.9) //break
+        if(joy_msg.axes[5] < -0.9) //break
           can_id1.data[4] = 1;
         else
           can_id1.data[4] = 0;
 
-
-        initializing = false;
-
-
         can_id25.data[0] = 2;
-        can_id25.data[1] = (joy_msg.axes[1] * 90) + 50; //steering 
-
-        if(joy_msg.axes[1] < -0.1) //direction of movement
+        can_id25.data[1] = (joy_msg.axes[3] * -90) + 90;  //steering 
+        
+        if(joy_msg.axes[1] > 0.1)     //direction of movement
           can_id25.data[2] = 1;
-        else if(joy_msg.axes[1] > 0.1)
+        else if(joy_msg.axes[1] < -0.1)
           can_id25.data[2] = 2;
         else
           can_id25.data[2] = 0;
         
-
-
-
-        can_id25.data[3] = abs(joy_msg.axes[1]) * 90;
-
+        can_id25.data[3] = abs(joy_msg.axes[1]) * 100;
         can_id25.data[4] = 200;
         can_id25.data[5] = 20;
-
         can_id25.data[6] = 180;
-
-
-
 
         can_id1.header.stamp = this->get_clock()->now();
         can_id25.header.stamp = this->get_clock()->now();
 
         raw_can_pub_->publish(can_id1);
         raw_can_pub_->publish(can_id25);
-
-          
-
+        initializing = false;
       }
       
 
@@ -199,18 +170,8 @@ class AgrorobInterface : public rclcpp::Node
           remote_state_msg.stop_drivers       =  can_msg.data[0]; //0 - inactive; 1 - STOP of all drives active
           remote_state_msg.stop_engine        =  can_msg.data[1]; //0 - the internal combustion engine can work; 1 - engine shutdown
           remote_state_msg.auto_mode_enabled  =  can_msg.data[2]; //0 - manual mode; 1 - automatic mode
-          
-          
-
-
-          // auto_mode_enabled = modeManager.update_remote_state(can_msg_, failure_state_message);
-          
-          // if(!auto_mode_enabled)
-          //   RCLCPP_INFO(this->get_logger(), agrorob_not_ready);
-
           break;
         }
-
 
         case 31:
         {
@@ -295,11 +256,7 @@ class AgrorobInterface : public rclcpp::Node
           failure_state_pub_->publish(failure_state_msg);
           break;
         }
-        
-        
       }
-
-      
     }
     
     rclcpp::Subscription<can_msgs::msg::Frame>::SharedPtr raw_can_sub_;
@@ -317,15 +274,15 @@ class AgrorobInterface : public rclcpp::Node
     agrorob_msgs::msg::ToolState tool_state_msg = agrorob_msgs::msg::ToolState();
     agrorob_msgs::msg::EngineState engine_state_msg = agrorob_msgs::msg::EngineState();
     agrorob_msgs::msg::FailureState failure_state_msg =  agrorob_msgs::msg::FailureState();
-    
+
     can_msgs::msg::Frame can_id1 = initialize_can_frame();
     can_msgs::msg::Frame can_id25 = initialize_can_frame();
     
-      // auto mode_control_message = agrorob_msgs::msg::ModeControl();
-      // auto robot_control_message = agrorob_msgs::msg::RobotControl();
-     
-      // auto sprayer_control_message = agrorob_msgs::msg::SprayerControl();
-      // auto tool_control_message = agrorob_msgs::msg::ToolControl();
+    // auto mode_control_message = agrorob_msgs::msg::ModeControl();
+    // auto robot_control_message = agrorob_msgs::msg::RobotControl();
+    // auto sprayer_control_message = agrorob_msgs::msg::SprayerControl();
+    // auto tool_control_message = agrorob_msgs::msg::ToolControl();
+
     bool agrorob_ready_to_move = false;
     bool initializing = true;
       
