@@ -96,17 +96,12 @@ class AgrorobInterface : public rclcpp::Node
           can_id1.data[2] = 0;
           can_id1.data[3] = 120;
           can_id1.data[4] = 0;
-          can_id1.data[5] = 0;
+          can_id1.data[5] = 1;
           can_id1.data[7] = 0;
           if(!agrorob_ready_to_move)
             RCLCPP_INFO(this->get_logger(), "Agrorob ready to move");
           agrorob_ready_to_move = true;
         }
-
-        if(joy_msg.axes[2] < -0.9) //gear
-          can_id1.data[5] = 1;
-        else
-          can_id1.data[5] = 0;
         
         if(joy_msg.axes[5] < -0.9) //break
           can_id1.data[4] = 1;
