@@ -94,7 +94,7 @@ class AgrorobInterface : public rclcpp::Node
           can_id1.data[0] = 0;
           can_id1.data[1] = 0;
           can_id1.data[2] = 0;
-          can_id1.data[3] = 120;
+          can_id1.data[3] = 170;
           can_id1.data[4] = 0;
           can_id1.data[5] = 1;
           can_id1.data[7] = 0;
