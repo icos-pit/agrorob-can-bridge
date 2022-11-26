@@ -31,13 +31,9 @@ namespace agrorob_interface
 
     private:
       
-      
       void joy_callback(const sensor_msgs::msg::Joy & joy_msg);
-    
-
       void can_callback(const can_msgs::msg::Frame & can_msg);
     
-      
       rclcpp::Subscription<can_msgs::msg::Frame>::SharedPtr raw_can_sub_;
       rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_sub_;
       
@@ -46,6 +42,7 @@ namespace agrorob_interface
       rclcpp::Publisher<agrorob_msgs::msg::ToolState>::SharedPtr tool_stats_pub_;
       rclcpp::Publisher<agrorob_msgs::msg::EngineState>::SharedPtr engine_stats_pub_; 
       rclcpp::Publisher<agrorob_msgs::msg::FailureState>::SharedPtr failure_state_pub_; 
+      
       rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr raw_can_pub_;
 
       // rclcpp::Service<common_interfaces::srv::Trigger>::SharedPtr engine_start_srv_;
