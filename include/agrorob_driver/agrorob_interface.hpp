@@ -1,7 +1,9 @@
+#ifndef __AGROROB_INTERFACE_HPP__
+#define __AGROROB_INTERFACE_HPP__
+
+
 #include <memory>
 #include <math.h>
-
-
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
@@ -63,8 +65,11 @@ namespace agrorob_interface
 
       bool agrorob_ready_to_move = false;
       bool initializing = true;
+      double rpm_to_rad_s;
         
       
   };
 
 }
+
+#endif  //__AGROROB_INTERFACE_HPP__

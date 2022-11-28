@@ -17,7 +17,7 @@ include_directories(
   include
 )
 
-add_executable(agrorob_interface src/agrorob_interface_node.cpp src/agrorob_interface.cpp)
+add_executable(agrorob_interface src/main.cpp src/agrorob_interface.cpp)
 
 target_link_libraries(agrorob_interface)
 

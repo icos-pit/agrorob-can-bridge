@@ -37,7 +37,7 @@ namespace agrorob_interface
     raw_can_pub_ = this->create_publisher<can_msgs::msg::Frame>("/to_can_bus", 10);
 
     // engine_start_srv_ = this->create_service<example_interfaces::srv::AddTwoInts>("add_two_ints", &add);
-
+    rpm_to_rad_s =  0.10472;
   }
 
   can_msgs::msg::Frame AgrorobInterface::initialize_can_frame()
@@ -186,10 +186,10 @@ namespace agrorob_interface
         robot_state_msg.left_rear_wheel_turn_angle_rad   = (can_msg.data[2] - 90) * (M_PI/180) ;
         robot_state_msg.right_rear_wheel_turn_angle_rad  = (can_msg.data[3] - 90) * (M_PI/180) ;
 
-        robot_state_msg.left_front_wheel_rotational_speed_rpm   = can_msg.data[4];
-        robot_state_msg.right_front_wheel_rotational_speed_rpm  = can_msg.data[5];
-        robot_state_msg.left_rear_wheel_rotational_speed_rpm    = can_msg.data[6];
-        robot_state_msg.right_rear_wheel_rotational_speed_rpm   = can_msg.data[7];
+        robot_state_msg.left_front_wheel_rotational_speed_rad_s   = can_msg.data[4] * rpm_to_rad_s;
+        robot_state_msg.right_front_wheel_rotational_speed_rad_s  = can_msg.data[5] * rpm_to_rad_s;
+        robot_state_msg.left_rear_wheel_rotational_speed_rad_s    = can_msg.data[6] * rpm_to_rad_s;
+        robot_state_msg.right_rear_wheel_rotational_speed_rad_s   = can_msg.data[7] * rpm_to_rad_s;
         robot_state_pub_->publish(robot_state_msg);
         break;
       }
