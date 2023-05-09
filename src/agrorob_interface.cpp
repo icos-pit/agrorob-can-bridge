@@ -65,7 +65,7 @@ namespace agrorob_interface
           RCLCPP_INFO(this->get_logger(), "Initializing...");
         can_id1.data[0] = 0;
         can_id1.data[1] = 0;
-        can_id1.data[3] = 120;
+        can_id1.data[3] = 170;
         can_id1.data[7] = 0;
         can_id1.data[6] = 0;
         can_id1.data[5] = 0;
