@@ -37,7 +37,7 @@ namespace agrorob_interface
     raw_can_pub_ = this->create_publisher<can_msgs::msg::Frame>("/to_can_bus", 10);
 
     // engine_start_srv_ = this->create_service<example_interfaces::srv::AddTwoInts>("add_two_ints", &add);
-    rpm_to_rad_s =  0.10472;
+    rpm_to_rad_s =  0.10472;  
   }
 
   can_msgs::msg::Frame AgrorobInterface::initialize_can_frame()
@@ -52,9 +52,35 @@ namespace agrorob_interface
   }
   
   void AgrorobInterface::joy_callback(const sensor_msgs::msg::Joy & joy_msg)
-  {
+  }
     can_id1.id = 1;
     can_id25.id = 25;
+    can_id100.id = 100;
+
+
+//  if (joy_msg.axes[2] < 0 && joy_msg.axes[5] < 0){
+//         if(joy_msg.axes == -1)
+//           can_id100.data[2] == 0;
+//         if(joy_msg.axes == 1)
+//           can_id100.data[2] == 1;
+//       }
+//      // By pressing L1 & R1 the robot will change its control mode :::: 0-manual\1-auto
+//     if (remote_state_msg.auto_mode_enabled == 1){
+//         if(joy_msg.buttons[4] == 1 && joy_msg.buttons[5] == 1){
+//           remote_state_msg.auto_mode_enabled == 0;
+//           RCLCPP_INFO(this->get_logger(), "Engine is running in manual mode");
+//           can_id100.data[2] = 0;
+//         }
+//     }   
+//     if (remote_state_msg.auto_mode_enabled == 0){
+//       if(joy_msg.buttons[4] == 1 && joy_msg.buttons[5] == 1){
+//         remote_state_msg.auto_mode_enabled == 1;
+//         RCLCPP_INFO(this->get_logger(), "Engine is running in auto mode");
+//         can_id100.data[2] = 1;
+//         }
+//     }
+
+
 
     if(remote_state_msg.auto_mode_enabled == 1)
     {
@@ -72,6 +98,7 @@ namespace agrorob_interface
         can_id1.data[4] = 0;
       }
 
+
       if(engine_state_msg.engine_running == false)
         {
           if(initializing)
@@ -86,6 +113,13 @@ namespace agrorob_interface
 
         }
 
+        // if(joy_msg.buttons[1] == 1)
+        // {
+        //     RCLCPP_INFO(this->get_logger()," engine turn off command send");
+        //     can_id1.data[1] = 1;
+        // }else{
+        //     can_id1.data[1] = 0;
+        // }
 
       if(engine_state_msg.engine_running == true)
       {
@@ -128,10 +162,22 @@ namespace agrorob_interface
 
       raw_can_pub_->publish(can_id1);
       raw_can_pub_->publish(can_id25);
+      // raw_can_pub_->publish(can_id100);
       initializing = false;
     }
     
 
+  }
+
+  int AgrorobInterface::get_engine_rpm(const sensor_msgs::msg::Joy & joy_msg)
+  {
+    if (joy_msg.buttons[3] == 1 && joy_msg.buttons[5] == 1 && AgrorobInterface::rclcpp::rpm_velocity < 180){
+      rpm_velocity += 10;
+    }
+    if (joy_msg.buttons[0] == 1 && joy_msg.buttons[5] == 1 && AgrorobInterface::rclcpp::rpm_velocity > 140){
+      rpm_velocity -= 10;
+    }
+    return rpm_velocity;
   }
 
   void AgrorobInterface::can_callback(const can_msgs::msg::Frame & can_msg) 
