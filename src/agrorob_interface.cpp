@@ -52,34 +52,10 @@ namespace agrorob_interface
   }
   
   void AgrorobInterface::joy_callback(const sensor_msgs::msg::Joy & joy_msg)
-  }
+  {
     can_id1.id = 1;
     can_id25.id = 25;
     can_id100.id = 100;
-
-
-//  if (joy_msg.axes[2] < 0 && joy_msg.axes[5] < 0){
-//         if(joy_msg.axes == -1)
-//           can_id100.data[2] == 0;
-//         if(joy_msg.axes == 1)
-//           can_id100.data[2] == 1;
-//       }
-//      // By pressing L1 & R1 the robot will change its control mode :::: 0-manual\1-auto
-//     if (remote_state_msg.auto_mode_enabled == 1){
-//         if(joy_msg.buttons[4] == 1 && joy_msg.buttons[5] == 1){
-//           remote_state_msg.auto_mode_enabled == 0;
-//           RCLCPP_INFO(this->get_logger(), "Engine is running in manual mode");
-//           can_id100.data[2] = 0;
-//         }
-//     }   
-//     if (remote_state_msg.auto_mode_enabled == 0){
-//       if(joy_msg.buttons[4] == 1 && joy_msg.buttons[5] == 1){
-//         remote_state_msg.auto_mode_enabled == 1;
-//         RCLCPP_INFO(this->get_logger(), "Engine is running in auto mode");
-//         can_id100.data[2] = 1;
-//         }
-//     }
-
 
 
     if(remote_state_msg.auto_mode_enabled == 1)
@@ -113,13 +89,6 @@ namespace agrorob_interface
 
         }
 
-        // if(joy_msg.buttons[1] == 1)
-        // {
-        //     RCLCPP_INFO(this->get_logger()," engine turn off command send");
-        //     can_id1.data[1] = 1;
-        // }else{
-        //     can_id1.data[1] = 0;
-        // }
 
       if(engine_state_msg.engine_running == true)
       {
@@ -161,12 +130,10 @@ namespace agrorob_interface
       can_id25.header.stamp = this->get_clock()->now();
 
       raw_can_pub_->publish(can_id1);
-      raw_can_pub_->publish(can_id25);
-      // raw_can_pub_->publish(can_id100);
+      raw_can_pub_->publish(can_id25);      
       initializing = false;
     }
     
-
   }
 
   int AgrorobInterface::get_engine_rpm(const sensor_msgs::msg::Joy & joy_msg)
