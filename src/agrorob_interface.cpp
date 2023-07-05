@@ -57,9 +57,11 @@ namespace agrorob_interface
   {
     if (joy_msg.buttons[3] == 1 && joy_msg.buttons[5] == 1 && AgrorobInterface::rpm_velocity < 180){
       rpm_velocity += 10;
+      RCLCPP_INFO(this->get_logger(), "Velocity of engine in rpm: %d", rpm_velocity);
     }
     if (joy_msg.buttons[0] == 1 && joy_msg.buttons[5] == 1 && AgrorobInterface::rpm_velocity > 140){
       rpm_velocity -= 10;
+      RCLCPP_INFO(this->get_logger(), "Velocity of engine in rpm: %d", rpm_velocity);
     }
     
   }
@@ -68,7 +70,7 @@ namespace agrorob_interface
   void AgrorobInterface::joy_callback(const sensor_msgs::msg::Joy & joy_msg)
   {
     // AgrorobInterface::get_engine_rpm(joy_msg);
-    RCLCPP_INFO(this->get_logger(), "Velocity of engine in rpm: %d", rpm_velocity);
+    // RCLCPP_INFO(this->get_logger(), "Velocity of engine in rpm: %d", rpm_velocity);
 
     can_id1.id = 1;
     can_id25.id = 25; 
