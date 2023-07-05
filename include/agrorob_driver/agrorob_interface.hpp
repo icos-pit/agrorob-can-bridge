@@ -35,6 +35,8 @@ namespace agrorob_interface
       
       void joy_callback(const sensor_msgs::msg::Joy & joy_msg);
       void can_callback(const can_msgs::msg::Frame & can_msg);
+
+      int get_engine_rpm(const sensor_msgs::msg::Joy & joy_msg);
     
       rclcpp::Subscription<can_msgs::msg::Frame>::SharedPtr raw_can_sub_;
       rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_sub_;
@@ -66,6 +68,7 @@ namespace agrorob_interface
       bool agrorob_ready_to_move = false;
       bool initializing = true;
       double rpm_to_rad_s;
+      int rpm_velocity;
         
       
   };
