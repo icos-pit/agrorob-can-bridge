@@ -53,9 +53,11 @@ namespace agrorob_interface
   
   void AgrorobInterface::joy_callback(const sensor_msgs::msg::Joy & joy_msg)
   {
+    int x = AgrorobInterface::rclcpp::get_engine_rpm(joy_msg);
+    RCLCPP_INFO(this->get_logger(), "Velocity of engine in rpm: %d", x);
+
     can_id1.id = 1;
-    can_id25.id = 25;
-    can_id100.id = 100;
+    can_id25.id = 25;    
 
 
     if(remote_state_msg.auto_mode_enabled == 1)
