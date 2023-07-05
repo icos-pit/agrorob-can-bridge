@@ -51,11 +51,24 @@ namespace agrorob_interface
     frame.dlc = 8;
     return frame;
   }
-  
+
+
+   void AgrorobInterface::get_engine_rpm(const sensor_msgs::msg::Joy & joy_msg)
+  {
+    if (joy_msg.buttons[3] == 1 && joy_msg.buttons[5] == 1 && AgrorobInterface::rpm_velocity < 180){
+      rpm_velocity += 10;
+    }
+    if (joy_msg.buttons[0] == 1 && joy_msg.buttons[5] == 1 && AgrorobInterface::rpm_velocity > 140){
+      rpm_velocity -= 10;
+    }
+    return rpm_velocity;
+  }
+
+
   void AgrorobInterface::joy_callback(const sensor_msgs::msg::Joy & joy_msg)
   {
-    int x = AgrorobInterface::get_engine_rpm(joy_msg);
-    RCLCPP_INFO(this->get_logger(), "Velocity of engine in rpm: %d", x);
+    AgrorobInterface::get_engine_rpm(joy_msg);
+    RCLCPP_INFO(this->get_logger(), "Velocity of engine in rpm: %d", rpm_velocity);
 
     can_id1.id = 1;
     can_id25.id = 25; 
@@ -93,7 +106,7 @@ namespace agrorob_interface
           RCLCPP_INFO(this->get_logger(), "Initializing...");
         can_id1.data[0] = 0;
         can_id1.data[1] = 0;
-        can_id1.data[3] = 170;
+        can_id1.data[3] = rpm_velocity;
         can_id1.data[7] = 0;
         can_id1.data[6] = 0;
         can_id1.data[5] = 0;
@@ -170,16 +183,7 @@ namespace agrorob_interface
     
   }
 
-  int AgrorobInterface::get_engine_rpm(const sensor_msgs::msg::Joy & joy_msg)
-  {
-    if (joy_msg.buttons[3] == 1 && joy_msg.buttons[5] == 1 && AgrorobInterface::rpm_velocity < 180){
-      rpm_velocity += 10;
-    }
-    if (joy_msg.buttons[0] == 1 && joy_msg.buttons[5] == 1 && AgrorobInterface::rpm_velocity > 140){
-      rpm_velocity -= 10;
-    }
-    return rpm_velocity;
-  }
+ 
 
   void AgrorobInterface::can_callback(const can_msgs::msg::Frame & can_msg) 
   {
