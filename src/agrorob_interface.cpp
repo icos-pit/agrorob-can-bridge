@@ -61,37 +61,37 @@ namespace agrorob_interface
     if (joy_msg.buttons[0] == 1 && joy_msg.buttons[5] == 1 && AgrorobInterface::rpm_velocity > 140){
       rpm_velocity -= 10;
     }
-    return rpm_velocity;
+    
   }
 
 
   void AgrorobInterface::joy_callback(const sensor_msgs::msg::Joy & joy_msg)
   {
-    AgrorobInterface::get_engine_rpm(joy_msg);
+    // AgrorobInterface::get_engine_rpm(joy_msg);
     RCLCPP_INFO(this->get_logger(), "Velocity of engine in rpm: %d", rpm_velocity);
 
     can_id1.id = 1;
     can_id25.id = 25; 
     can_id100.id = 100;
 
-    if (joy_msg.axes[2] < 0 && joy_msg.axes[5] < 0){
-        if(joy_msg.axes == -1)
-          can_id100.data[2] == 0;
-        if(joy_msg.axes == 1)
-          can_id100.data[2] == 1;
-      }
+    // if (joy_msg.axes[2] < 0 && joy_msg.axes[5] < 0){
+    //     if(joy_msg.axes == -1)
+    //       can_id100.data[2] == 0;
+    //     if(joy_msg.axes == 1)
+    //       can_id100.data[2] == 1;
+    //   }
      // By pressing L1 & R1 the robot will change its control mode :::: 0-manual\1-auto
     if (remote_state_msg.auto_mode_enabled == 1){
         if(joy_msg.buttons[4] == 1 && joy_msg.buttons[5] == 1){
-          remote_state_msg.auto_mode_enabled == 0;
-          RCLCPP_INFO(this->get_logger(), "Engine is running in manual mode");
+          remote_state_msg.auto_mode_enabled = 0;
+          RCLCPP_INFO(this->get_logger(), "ً--- Manual mode command sent ---");
           can_id100.data[2] = 0;
         }
     }   
     if (remote_state_msg.auto_mode_enabled == 0){
       if(joy_msg.buttons[4] == 1 && joy_msg.buttons[5] == 1){
-        remote_state_msg.auto_mode_enabled == 1;
-        RCLCPP_INFO(this->get_logger(), "Engine is running in auto mode");
+        remote_state_msg.auto_mode_enabled = 1;
+        RCLCPP_INFO(this->get_logger(), "--- Auto mode command send ---");
         can_id100.data[2] = 1;
         }
     }   

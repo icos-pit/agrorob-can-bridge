@@ -59,6 +59,7 @@ namespace agrorob_interface
 
       can_msgs::msg::Frame can_id1 = initialize_can_frame();
       can_msgs::msg::Frame can_id25 = initialize_can_frame();
+      can_msgs::msg::Frame can_id100 = initialize_can_frame();
       
       // auto mode_control_message = agrorob_msgs::msg::ModeControl();
       // auto robot_control_message = agrorob_msgs::msg::RobotControl();
