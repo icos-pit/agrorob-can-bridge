@@ -161,7 +161,7 @@ namespace agrorob_interface
         can_id1.data[4] = 0;
 
       can_id25.data[0] = 2;
-      can_id25.data[1] = (joy_msg.axes[2] * -90) + 90;  //steering 
+      can_id25.data[1] = (joy_msg.axes[3] * -90) + 90;  //steering 
       
       if(joy_msg.axes[1] > 0.1)     //direction of movement
         can_id25.data[2] = 1;
