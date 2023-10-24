@@ -55,7 +55,7 @@ namespace agrorob_interface
     double refAcceleration = 0.0;
     double velocity_ms = (2.0 * M_PI * wheelR * tool_state_msg.wheels_average_rotational_speed_rpm ) / 60.0;
 
-    velocityController.update(filter.update(velocity_ms), refVelocity, refAcceleration);
+    velocity.update(filter.update(velocity_ms), refVelocity, refAcceleration);
     
   }
 

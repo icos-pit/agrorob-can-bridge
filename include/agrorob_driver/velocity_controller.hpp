@@ -1,7 +1,7 @@
 #pragma once
 
 #include <agrorob_driver/digital_filters.hpp>
-#include <agrorob_driver/adrc_eso.hpp>
+// #include <agrorob_driver/adrc_eso.hpp>
 
 
 namespace agrorob_interface
@@ -12,7 +12,7 @@ namespace agrorob_interface
     double throttle_;
     double brake_;
     
-    double loopRate_; 
+    double dt_; 
     double controlScale = 1.0;
     //BCM pin numbering mode
     double kd = 0.4; 
@@ -26,7 +26,7 @@ namespace agrorob_interface
     
     double prevControl = 0.0;
 
-    int direction = 0 //0 - the robot is not moving; 1 - forward drive  2 - driving backwards 
+    int direction = 0; //0 - the robot is not moving; 1 - forward drive  2 - driving backwards 
     
 
     
@@ -34,7 +34,7 @@ namespace agrorob_interface
     public:
 
         VelocityController(double loopRate) 
-        : loopRate_(loopRate), velocityRateFilter(1.0/loopRate, 200.0)
+        : dt_(1.0/loopRate), velocityRateFilter(dt_, 200.0)
         {
             
         }
@@ -42,7 +42,8 @@ namespace agrorob_interface
 
         double getDirection()
         {
-            return direction;
+            // return direction;
+            return 0;
 
         }
         
@@ -51,7 +52,7 @@ namespace agrorob_interface
         double getVelocity()
         {
 
-           
+           return 0.0;
         }
         
         
@@ -59,51 +60,51 @@ namespace agrorob_interface
         void update(double velocity, double referenceVelocity, double referenceVelocityRate )
         {
             
-            // Check, if car goes to opossite direction than requesed, If so, start braking.
-            if ((referenceVelocity > 0.0 && tbVel_->getGear() == 2) || (referenceVelocity < 0.0 && tbVel_->getGear() == 1))
-            {
-                braking_ = true;
-            }
+            // // Check, if car goes to opossite direction than requesed, If so, start braking.
+            // if ((referenceVelocity > 0.0 && tbVel_->getGear() == 2) || (referenceVelocity < 0.0 && tbVel_->getGear() == 1))
+            // {
+            //     braking_ = true;
+            // }
 
 
-            // If going backwards, change sign of refVel to opposite, control then is the same as going forward
-            if (tbVel_->getGear() == 2){
-                referenceVelocity = -referenceVelocity;
-            }
+            // // If going backwards, change sign of refVel to opposite, control then is the same as going forward
+            // if (tbVel_->getGear() == 2){
+            //     referenceVelocity = -referenceVelocity;
+            // }
             
-            double velocityError = referenceVelocity - velocity;
-            double controlSignal = 0.0;
+            // double velocityError = referenceVelocity - velocity;
+            // double controlSignal = 0.0;
 
-            if (velocity <= referenceVelocity && referenceVelocity > 0.0)
-                braking_ = false;
-            // braking_ = velocity <= referenceVelocity ? false;
+            // if (velocity <= referenceVelocity && referenceVelocity > 0.0)
+            //     braking_ = false;
+            // // braking_ = velocity <= referenceVelocity ? false;
 
-            if (velocity > 1.5*referenceVelocity || braking_) {
-                braking_ = true;
-                controlSignal = -1.0;
-            } else {
-                errorIntegral += velocityError*(1.0/loopRate_);
-                double velocityRate = velocityRateFilter.update((velocity - prevVelocity)*loopRate_);
-                prevVelocity = velocity;
-                double velocityRateError = referenceVelocityRate - velocityRate;
+            // if (velocity > 1.5*referenceVelocity || braking_) {
+            //     braking_ = true;
+            //     controlSignal = -1.0;
+            // } else {
+            //     errorIntegral += velocityError*(1.0/loopRate_);
+            //     double velocityRate = velocityRateFilter.update((velocity - prevVelocity)*loopRate_);
+            //     prevVelocity = velocity;
+            //     double velocityRateError = referenceVelocityRate - velocityRate;
                 
 
-                controlSignal = kd*velocityError + ki*errorIntegral + kf*velocityRateError;
+            //     controlSignal = kd*velocityError + ki*errorIntegral + kf*velocityRateError;
 
 
                 
 
               
 
-                if (controlSignal > 1.0)
-                    controlSignal = 1.0;
-                if (controlSignal < 0.0)
-                    controlSignal = 0.0;
-            }
+            //     if (controlSignal > 1.0)
+            //         controlSignal = 1.0;
+            //     if (controlSignal < 0.0)
+            //         controlSignal = 0.0;
+            // }
 
-            // RCLCPP_INFO_STREAM(nh_->get_logger(), "Control signal: " << controlSignal);
+            // // RCLCPP_INFO_STREAM(nh_->get_logger(), "Control signal: " << controlSignal);
 
-            tbVel_->setThrottleValue(controlSignal*controlScale);
+            // tbVel_->setThrottleValue(controlSignal*controlScale);
 
 
         }

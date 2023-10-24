@@ -9,6 +9,7 @@
 #include "std_msgs/msg/string.hpp"
 #include "can_msgs/msg/frame.hpp"
 #include "sensor_msgs/msg/joy.hpp"
+#include "geometry_msgs/msg/twist.hpp"
 
 #include "agrorob_msgs/msg/engine_state.hpp"
 #include "agrorob_msgs/msg/failure_state.hpp"
@@ -42,6 +43,8 @@ namespace agrorob_interface
       void get_engine_rpm(const sensor_msgs::msg::Joy & joy_msg);
 
       void can_callback(const can_msgs::msg::Frame & can_msg);
+      void cmd_vel_callback(const geometry_msgs::msg::Twist & cmd_vel_msg);
+      void timer_callback();
     
       rclcpp::Subscription<can_msgs::msg::Frame>::SharedPtr raw_can_sub_;
       rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_sub_;
