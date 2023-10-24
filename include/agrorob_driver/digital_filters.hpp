@@ -3,7 +3,7 @@
 #include <cmath>
 #include "circular_delay.hpp"
 
-namespace melex_ros2
+namespace agrorob_interface
 {
 template<typename T>
 constexpr T squareOf(T input){return input * input;}

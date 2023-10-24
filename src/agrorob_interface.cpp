@@ -2,12 +2,14 @@
 #include <math.h>
 
 #include "agrorob_driver/agrorob_interface.hpp"
-#include "agrorob_driver/digital_filters.hpp"
+#include "agrorob_driver/velocity_controller.hpp"
+
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "can_msgs/msg/frame.hpp"
 #include "sensor_msgs/msg/joy.hpp"
+#include "geometry_msgs/msg/twist.hpp"
 
 #include "agrorob_msgs/msg/engine_state.hpp"
 #include "agrorob_msgs/msg/failure_state.hpp"
@@ -25,10 +27,13 @@ using std::placeholders::_1;
 
 namespace agrorob_interface
 {
-  AgrorobInterface::AgrorobInterface() : Node("agrorob_interface")
+  AgrorobInterface::AgrorobInterface() : Node("agrorob_interface"), velocity(loopFrequencyHz)
   {
     raw_can_sub_ = this->create_subscription<can_msgs::msg::Frame>("from_can_bus", 10, std::bind(&AgrorobInterface::can_callback, this, _1));
     joy_sub_ = this->create_subscription<sensor_msgs::msg::Joy>("joy", 10, std::bind(&AgrorobInterface::joy_callback, this, _1));
+    cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>("cmd_vel", 10, std::bind(&AgrorobInterface::cmd_vel_callback, this, _1));
+
+    timer_ = this->create_wall_timer(10ms, std::bind(&AgrorobInterface::timer_callback, this));
 
     remote_state_pub_ = this->create_publisher<agrorob_msgs::msg::RemoteState>("/agrorob/remote_state", 10);
     robot_state_pub_ = this->create_publisher<agrorob_msgs::msg::RobotState>("/agrorob/robot_state", 10);
@@ -36,10 +41,22 @@ namespace agrorob_interface
     engine_stats_pub_ = this->create_publisher<agrorob_msgs::msg::EngineState>("/agrorob/engine_state", 10);
     failure_state_pub_ = this->create_publisher<agrorob_msgs::msg::FailureState>("/agrorob/failure_state", 10);
     raw_can_pub_ = this->create_publisher<can_msgs::msg::Frame>("/to_can_bus", 10);
+    
 
     // engine_start_srv_ = this->create_service<example_interfaces::srv::AddTwoInts>("add_two_ints", &add);
     rpm_to_rad_s =  0.10472;  
-    rpm_velocity = 140;    
+    engine_rotation_rpm = 140;   
+    wheelR = 0.774 / 2.0;
+
+  }
+
+  void AgrorobInterface::timer_callback()
+  {
+    double refAcceleration = 0.0;
+    double velocity_ms = (2.0 * M_PI * wheelR * tool_state_msg.wheels_average_rotational_speed_rpm ) / 60.0;
+
+    velocityController.update(filter.update(velocity_ms), refVelocity, refAcceleration);
+    
   }
 
   can_msgs::msg::Frame AgrorobInterface::initialize_can_frame()
@@ -56,48 +73,31 @@ namespace agrorob_interface
 
    void AgrorobInterface::get_engine_rpm(const sensor_msgs::msg::Joy & joy_msg)
   {
-    if (joy_msg.buttons[3] == 1 && joy_msg.buttons[5] == 1 && AgrorobInterface::rpm_velocity < 180){
-      rpm_velocity += 10;
-      RCLCPP_INFO(this->get_logger(), "Velocity of engine in rpm: %d", rpm_velocity);
+    if (joy_msg.buttons[3] == 1 && joy_msg.buttons[5] == 1 && AgrorobInterface::engine_rotation_rpm < 180){
+      engine_rotation_rpm += 10;
+      RCLCPP_INFO(this->get_logger(), "Velocity of engine in rpm: %d", engine_rotation_rpm);
     }
-    if (joy_msg.buttons[0] == 1 && joy_msg.buttons[5] == 1 && AgrorobInterface::rpm_velocity > 140){
-      rpm_velocity -= 10;
-      RCLCPP_INFO(this->get_logger(), "Velocity of engine in rpm: %d", rpm_velocity);
+    if (joy_msg.buttons[0] == 1 && joy_msg.buttons[5] == 1 && AgrorobInterface::engine_rotation_rpm > 140){
+      engine_rotation_rpm -= 10;
+      RCLCPP_INFO(this->get_logger(), "Velocity of engine in rpm: %d", engine_rotation_rpm);
     }
     
+  }
+
+  void AgrorobInterface::cmd_vel_callback(const geometry_msgs::msg::Twist & cmd_vel_msg)
+  {
+    refVelocity = cmd_vel_msg.linear.x;
   }
 
 
   void AgrorobInterface::joy_callback(const sensor_msgs::msg::Joy & joy_msg)
   {
     AgrorobInterface::get_engine_rpm(joy_msg);
-    // RCLCPP_INFO(this->get_logger(), "Velocity of engine in rpm: %d", rpm_velocity);
+    // RCLCPP_INFO(this->get_logger(), "Velocity of engine in rpm: %d", engine_rotation_rpm);
 
     can_id1.id = 1;
     can_id25.id = 25; 
     can_id100.id = 100;
-
-    // if (joy_msg.axes[2] < 0 && joy_msg.axes[5] < 0){
-    //     if(joy_msg.axes == -1)
-    //       can_id100.data[2] == 0;
-    //     if(joy_msg.axes == 1)
-    //       can_id100.data[2] == 1;
-    //   }
-     // By pressing L1 & R1 the robot will change its control mode :::: 0-manual\1-auto
-    // if (remote_state_msg.auto_mode_enabled == 1){
-    //     if(joy_msg.buttons[4] == 1 && joy_msg.buttons[5] == 1){
-    //       remote_state_msg.auto_mode_enabled = 0;
-    //       RCLCPP_INFO(this->get_logger(), "ً--- Manual mode command sent ---");
-    //       // can_id100.data[2] = 0;
-    //     }
-    // }   
-    // if (remote_state_msg.auto_mode_enabled == 0){
-    //   if(joy_msg.buttons[4] == 1 && joy_msg.buttons[5] == 1){
-    //     remote_state_msg.auto_mode_enabled = 1;
-    //     RCLCPP_INFO(this->get_logger(), "--- Auto mode command send ---");
-    //     // can_id100.data[2] = 1;
-    //     }
-    // }   
 
 
     if(remote_state_msg.auto_mode_enabled == 1)
@@ -147,7 +147,7 @@ namespace agrorob_interface
         can_id1.data[0] = 0;
         can_id1.data[1] = 0;
         can_id1.data[2] = 0;
-        can_id1.data[3] = rpm_velocity;
+        can_id1.data[3] = engine_rotation_rpm;
         can_id1.data[4] = 0;
         can_id1.data[5] = 1;
         can_id1.data[7] = 0;
@@ -156,25 +156,38 @@ namespace agrorob_interface
         agrorob_ready_to_move = true;
       }
       
-      if(joy_msg.axes[5] < -0.9) //break
-        can_id1.data[4] = 1;
-      else
-        can_id1.data[4] = 0;
-
       can_id25.data[0] = 2;
       can_id25.data[1] = (joy_msg.axes[3] * -90) + 90;  //steering 
-      
-      if(joy_msg.axes[1] > 0.1)     //direction of movement
-        can_id25.data[2] = 1;
-      else if(joy_msg.axes[1] < -0.1)
-        can_id25.data[2] = 2;
+
+      bool use_velocity_controller = false; // true to direct joy stick
+
+      if(joy_msg.axes[5] < -0.9) //break
+        can_id1.data[4] = 0;
       else
-        can_id25.data[2] = 0;
+        can_id1.data[4] = 1;
+
+      if (!use_velocity_controller)
+      {
+        if(joy_msg.axes[1] > 0.1)     //direction of movement
+          can_id25.data[2] = 1;
+        else if(joy_msg.axes[1] < -0.1)
+          can_id25.data[2] = 2;
+        else
+          can_id25.data[2] = 0;
+        
+        can_id25.data[3] = abs(joy_msg.axes[1]) * 100;
+        can_id25.data[4] = 200;
+        can_id25.data[5] = 20;
+        can_id25.data[6] = 180;
+
+
+      }else   // using velocity controller
+      {
+        can_id25.data[2] = velocity.getDirection();
+        can_id25.data[3] = velocity.getVelocity();
+      }
+
       
-      can_id25.data[3] = abs(joy_msg.axes[1]) * 100;
-      can_id25.data[4] = 200;
-      can_id25.data[5] = 20;
-      can_id25.data[6] = 180;
 
       can_id1.header.stamp = this->get_clock()->now();
       can_id25.header.stamp = this->get_clock()->now();

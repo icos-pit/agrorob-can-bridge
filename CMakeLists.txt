@@ -12,6 +12,7 @@ find_package(can_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(agrorob_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 include_directories(
   include
@@ -31,6 +32,7 @@ target_include_directories(agrorob_interface PUBLIC
   "std_msgs"
   "sensor_msgs"
   "agrorob_msgs"
+  "geometry_msgs"
 )
 target_compile_features(agrorob_interface PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 

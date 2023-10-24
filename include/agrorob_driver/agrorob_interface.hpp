@@ -16,6 +16,8 @@
 #include "agrorob_msgs/msg/remote_state.hpp"
 #include "agrorob_msgs/msg/robot_state.hpp"
 
+#include "agrorob_driver/velocity_controller.hpp"
+
 // #include "agrorob_msgs/msg/mode_control.hpp"
 // #include "agrorob_msgs/msg/robot_control.hpp"
 // #include "agrorob_msgs/msg/sprayer_control.hpp"
@@ -32,7 +34,10 @@ namespace agrorob_interface
       can_msgs::msg::Frame initialize_can_frame();
 
     private:
+
+      VelocityController velocity;
       
+
       void joy_callback(const sensor_msgs::msg::Joy & joy_msg);
       void get_engine_rpm(const sensor_msgs::msg::Joy & joy_msg);
 
@@ -40,6 +45,9 @@ namespace agrorob_interface
     
       rclcpp::Subscription<can_msgs::msg::Frame>::SharedPtr raw_can_sub_;
       rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_sub_;
+      rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_sub_;
+
+      rclcpp::TimerBase::SharedPtr timer_;
       
       rclcpp::Publisher<agrorob_msgs::msg::RemoteState>::SharedPtr remote_state_pub_;
       rclcpp::Publisher<agrorob_msgs::msg::RobotState>::SharedPtr robot_state_pub_;
@@ -68,8 +76,14 @@ namespace agrorob_interface
 
       bool agrorob_ready_to_move = false;
       bool initializing = true;
+      double loopFrequencyHz = 100.0;
       double rpm_to_rad_s;
-      int rpm_velocity;
+      int engine_rotation_rpm;
+      double wheelR;
+      double refVelocity;
+
+      MovingAvarageFilter<10> filter;
+        
         
       
   };
