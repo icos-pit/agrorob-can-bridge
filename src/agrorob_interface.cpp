@@ -2,6 +2,7 @@
 #include <math.h>
 
 #include "agrorob_driver/agrorob_interface.hpp"
+#include "agrorob_driver/digital_filters.hpp"
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
