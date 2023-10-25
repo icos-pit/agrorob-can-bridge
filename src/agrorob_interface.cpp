@@ -56,6 +56,8 @@ namespace agrorob_interface
     double velocity_ms = (2.0 * M_PI * wheelR * tool_state_msg.wheels_average_rotational_speed_rpm ) / 60.0;
 
     velocity.update(filter.update(velocity_ms), refVelocity, refAcceleration);
+
+    
     
   }
 
@@ -148,7 +150,7 @@ namespace agrorob_interface
         can_id1.data[1] = 0;
         can_id1.data[2] = 0;
         can_id1.data[3] = engine_rotation_rpm;
-        can_id1.data[4] = 0;
+        can_id1.data[4] = 1;
         can_id1.data[5] = 1;
         can_id1.data[7] = 0;
         if(!agrorob_ready_to_move)
@@ -159,14 +161,22 @@ namespace agrorob_interface
       can_id25.data[0] = 2;
       can_id25.data[1] = (joy_msg.axes[3] * -90) + 90;  //steering 
 
-      bool use_velocity_controller = false; // true to direct joy stick
+      
 
       if(joy_msg.axes[5] < -0.9) //break
+      {
         can_id1.data[4] = 0;
+        RCLCPP_INFO(this->get_logger(), "************** Breaking **************");
+      }
       else
         can_id1.data[4] = 1;
 
-      if (!use_velocity_controller)
+      
+      
+      
+      bool use_velocity_controller = false; // true to direct joy stick
+
+      if (use_velocity_controller == false)
       {
         if(joy_msg.axes[1] > 0.1)     //direction of movement
           can_id25.data[2] = 1;
@@ -184,7 +194,7 @@ namespace agrorob_interface
       }else   // using velocity controller
       {
         can_id25.data[2] = velocity.getDirection();
-        can_id25.data[3] = velocity.getVelocity();
+        can_id25.data[3] = velocity.getThrottle();
       }
 
       
