@@ -41,6 +41,10 @@ namespace agrorob_interface
     engine_stats_pub_ = this->create_publisher<agrorob_msgs::msg::EngineState>("/agrorob/engine_state", 10);
     failure_state_pub_ = this->create_publisher<agrorob_msgs::msg::FailureState>("/agrorob/failure_state", 10);
     raw_can_pub_ = this->create_publisher<can_msgs::msg::Frame>("/to_can_bus", 10);
+
+    // std::string my_param = this->get_parameter("joy_wire").as_string()
+
+
     
 
     // engine_start_srv_ = this->create_service<example_interfaces::srv::AddTwoInts>("add_two_ints", &add);
@@ -57,7 +61,7 @@ namespace agrorob_interface
 
     velocity.update(filter.update(velocity_ms), refVelocity, refAcceleration);
 
-    
+
     
   }
 

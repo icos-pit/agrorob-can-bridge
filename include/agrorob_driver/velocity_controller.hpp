@@ -37,7 +37,7 @@ namespace agrorob_interface
     public:
 
         VelocityController(double loopRate) 
-        : dt_(1.0/loopRate), velocityRateFilter(dt_, 200.0)
+        : dt_(1.0/loopRate), velocityRateFilter(1.0/loopRate, 200.0)
         {
             
         }
