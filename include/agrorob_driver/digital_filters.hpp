@@ -2,6 +2,7 @@
 #include <stdexcept>
 #include <cmath>
 #include "circular_delay.hpp"
+#include <iostream>
 
 namespace agrorob_interface
 {
@@ -340,6 +341,7 @@ public:
     }
     {
       if(omega_c < sampleTime){
+
         throw std::domain_error("LowPassFilter constructor error: tua_c is smaller than the sample time dt.");
       }
     }
