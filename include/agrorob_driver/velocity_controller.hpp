@@ -37,7 +37,7 @@ namespace agrorob_interface
     public:
 
         VelocityController(double loopRate) 
-        : dt_(1.0/loopRate), velocityRateFilter(1.0/loopRate, 1000)
+        : dt_(1.0/loopRate)//, velocityRateFilter(1.0/loopRate, 200.0)
         {
             
         }
@@ -102,7 +102,7 @@ namespace agrorob_interface
 
 
                 errorIntegral += velocityError*(dt_);
-                double velocityRate = velocityRateFilter.update((velocity - prevVelocity)*dt_);
+                double velocityRate = (velocity - prevVelocity)*dt_;//velocityRateFilter.update((velocity - prevVelocity)*dt_);
                 prevVelocity = velocity;
                 double velocityRateError = referenceVelocityRate - velocityRate;
                 
