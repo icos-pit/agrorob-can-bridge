@@ -22,7 +22,7 @@ namespace agrorob_interface
     double errorIntegral = 0.0;
 
     double prevVelocity = 0.0;
-    LowPassFilter3 velocityRateFilter;
+    // LowPassFilter3 velocityRateFilter;
     
     double prevControl = 0.0;
 
@@ -37,7 +37,7 @@ namespace agrorob_interface
     public:
 
         VelocityController(double loopRate) 
-        : dt_(1.0/loopRate)//, velocityRateFilter(1.0/loopRate, 200.0)
+        : dt_(1.0/loopRate) //, velocityRateFilter(1.0/loopRate, 200.0)
         {
             
         }
