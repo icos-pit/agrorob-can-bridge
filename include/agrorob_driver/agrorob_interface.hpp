@@ -79,7 +79,6 @@ namespace agrorob_interface
 
       bool agrorob_ready_to_move = false;
       bool initializing = true;
-      double loopFrequencyHz = 100.0;
       double rpm_to_rad_s;
       int engine_rotation_rpm;
       double wheelR;

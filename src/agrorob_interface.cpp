@@ -27,7 +27,7 @@ using std::placeholders::_1;
 
 namespace agrorob_interface
 {
-  AgrorobInterface::AgrorobInterface() : Node("agrorob_interface"), velocity(loopFrequencyHz)
+  AgrorobInterface::AgrorobInterface() : Node("agrorob_interface"), velocity(100.0) //velocity(loop frequency)
   {
     raw_can_sub_ = this->create_subscription<can_msgs::msg::Frame>("from_can_bus", 10, std::bind(&AgrorobInterface::can_callback, this, _1));
     joy_sub_ = this->create_subscription<sensor_msgs::msg::Joy>("joy", 10, std::bind(&AgrorobInterface::joy_callback, this, _1));
@@ -42,12 +42,9 @@ namespace agrorob_interface
     failure_state_pub_ = this->create_publisher<agrorob_msgs::msg::FailureState>("/agrorob/failure_state", 10);
     raw_can_pub_ = this->create_publisher<can_msgs::msg::Frame>("/to_can_bus", 10);
 
-    // std::string my_param = this->get_parameter("joy_wire").as_string()
 
 
-    
-
-    // engine_start_srv_ = this->create_service<example_interfaces::srv::AddTwoInts>("add_two_ints", &add);
+  
     rpm_to_rad_s =  0.10472;  
     engine_rotation_rpm = 140;   
     wheelR = 0.774 / 2.0;
@@ -59,9 +56,11 @@ namespace agrorob_interface
     double refAcceleration = 0.0;
     double velocity_ms = (2.0 * M_PI * wheelR * tool_state_msg.wheels_average_rotational_speed_rpm ) / 60.0;
 
+
     velocity.update(filter.update(velocity_ms), refVelocity, refAcceleration);
 
-
+    RCLCPP_INFO(this->get_logger(), "timer call back");
+    velocity.getThrottle();
     
   }
 

@@ -1,5 +1,5 @@
 #pragma once
-
+#include <iostream>
 #include <agrorob_driver/digital_filters.hpp>
 // #include <agrorob_driver/adrc_eso.hpp>
 
@@ -12,7 +12,7 @@ namespace agrorob_interface
     double throttle_;
     double brake_;
     
-    double dt_; 
+    double dt_ = 0.0; 
     double controlScale = 50.0;
     //BCM pin numbering mode
     double kd = 0.4; 
@@ -22,7 +22,7 @@ namespace agrorob_interface
     double errorIntegral = 0.0;
 
     double prevVelocity = 0.0;
-    // LowPassFilter3 velocityRateFilter;
+    LowPassFilter3 velocityRateFilter;
     
     double prevControl = 0.0;
 
@@ -37,7 +37,7 @@ namespace agrorob_interface
     public:
 
         VelocityController(double loopRate) 
-        : dt_(1.0/loopRate) //, velocityRateFilter(1.0/loopRate, 200.0)
+        : dt_(1.0/loopRate) , velocityRateFilter(dt_ , 200.0)
         {
             
         }
@@ -102,7 +102,7 @@ namespace agrorob_interface
 
 
                 errorIntegral += velocityError*(dt_);
-                double velocityRate = (velocity - prevVelocity)*dt_;//velocityRateFilter.update((velocity - prevVelocity)*dt_);
+                double velocityRate = velocityRateFilter.update((velocity - prevVelocity)*dt_);
                 prevVelocity = velocity;
                 double velocityRateError = referenceVelocityRate - velocityRate;
                 

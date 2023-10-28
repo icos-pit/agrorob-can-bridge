@@ -306,7 +306,7 @@ private:
  */
 class LowPassFilter3 : public DigitalFilter<double> {
 public:
-  LowPassFilter3(long double sampleTime, long double omega_c, long double ioutput = 0):
+  LowPassFilter3(long double sampleTime, long double omega_c, long double ioutput = 0): 
     yc{
       1
       ,
@@ -323,6 +323,7 @@ public:
       (1 * tps::pow(sampleTime * omega_c, 3) + 4 * tps::pow(sampleTime * omega_c, 2) + 8 * sampleTime * omega_c + 8))
     },
     xc{
+      
       (double)(1 * tps::pow(sampleTime * omega_c, 3)
       /
       (1 * tps::pow(sampleTime * omega_c, 3) + 4 * tps::pow(sampleTime * omega_c, 2) + 8 * sampleTime * omega_c + 8))
@@ -341,9 +342,11 @@ public:
     }
     {
       if(omega_c < sampleTime){
+        std::cout << "LowPassFilter sampleTime: " << sampleTime << std::endl;
 
         throw std::domain_error("LowPassFilter constructor error: tua_c is smaller than the sample time dt.");
       }
+        
     }
   double update(double newValue) final{
     x.push(newValue);
