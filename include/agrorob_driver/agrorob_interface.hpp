@@ -37,20 +37,18 @@ namespace agrorob_interface
     private:
 
       VelocityController velocity;
-      
+     
+      void set_engine_rpm(const sensor_msgs::msg::Joy::SharedPtr joy_msg);
+      bool check_can_and_joy_connectivity();
 
-      void joy_callback(const sensor_msgs::msg::Joy & joy_msg);
-      void get_engine_rpm(const sensor_msgs::msg::Joy & joy_msg);
-
-      void can_callback(const can_msgs::msg::Frame & can_msg);
       void cmd_vel_callback(const geometry_msgs::msg::Twist & cmd_vel_msg);
+      void joy_callback();
+      void can_callback();
       void timer_callback();
     
       rclcpp::Subscription<can_msgs::msg::Frame>::SharedPtr raw_can_sub_;
       rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_sub_;
       rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_sub_;
-
-      rclcpp::TimerBase::SharedPtr timer_;
       
       rclcpp::Publisher<agrorob_msgs::msg::RemoteState>::SharedPtr remote_state_pub_;
       rclcpp::Publisher<agrorob_msgs::msg::RobotState>::SharedPtr robot_state_pub_;
@@ -60,7 +58,8 @@ namespace agrorob_interface
       
       rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr raw_can_pub_;
 
-      // rclcpp::Service<common_interfaces::srv::Trigger>::SharedPtr engine_start_srv_;
+      rclcpp::TimerBase::SharedPtr timer_;
+
       
       agrorob_msgs::msg::RemoteState remote_state_msg = agrorob_msgs::msg::RemoteState();  
       agrorob_msgs::msg::RobotState robot_state_msg = agrorob_msgs::msg::RobotState();
@@ -68,21 +67,40 @@ namespace agrorob_interface
       agrorob_msgs::msg::EngineState engine_state_msg = agrorob_msgs::msg::EngineState();
       agrorob_msgs::msg::FailureState failure_state_msg =  agrorob_msgs::msg::FailureState();
 
-      can_msgs::msg::Frame can_id1 = initialize_can_frame();
-      can_msgs::msg::Frame can_id25 = initialize_can_frame();
-      can_msgs::msg::Frame can_id100 = initialize_can_frame();
+      can_msgs::msg::Frame can_id1;
+      can_msgs::msg::Frame can_id25;
+
+      sensor_msgs::msg::Joy::SharedPtr joy_msg_ = std::make_shared<sensor_msgs::msg::Joy>();
+      can_msgs::msg::Frame::SharedPtr can_msg_ = std::make_shared<can_msgs::msg::Frame>();
       
       // auto mode_control_message = agrorob_msgs::msg::ModeControl();
       // auto robot_control_message = agrorob_msgs::msg::RobotControl();
       // auto sprayer_control_message = agrorob_msgs::msg::SprayerControl();
       // auto tool_control_message = agrorob_msgs::msg::ToolControl();
 
-      bool agrorob_ready_to_move = false;
-      bool initializing = true;
+      bool agrorob_ready_to_move;
+      bool initializing;
+      bool use_velocity_controller;
+
       double rpm_to_rad_s;
       int engine_rotation_rpm;
       double wheelR;
+
       double refVelocity;
+      double refRotationVel;
+      double refAcceleration;
+
+      bool never_saw_joy_msg;
+      bool never_saw_can_msg;
+
+      rclcpp::Time last_joy_msg_time_;
+      rclcpp::Time last_can_msg_time_;
+      rclcpp::Time last_control_mode_change;
+      rclcpp::Time last_engine_rpm_change;
+
+      int joy_connectivity_status_holder;
+      int can_connectivity_status_holder;
+      int connectivity_status_holder;
 
       MovingAvarageFilter<10> filter;
         
