@@ -58,9 +58,6 @@ namespace agrorob_interface
 
 
     velocity.update(filter.update(velocity_ms), refVelocity, refAcceleration);
-
-    RCLCPP_INFO(this->get_logger(), "timer call back");
-    velocity.getThrottle();
     
   }
 
