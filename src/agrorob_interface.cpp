@@ -42,7 +42,10 @@ namespace agrorob_interface
     failure_state_pub_ = this->create_publisher<agrorob_msgs::msg::FailureState>("/agrorob/failure_state", 10);
     raw_can_pub_ = this->create_publisher<can_msgs::msg::Frame>("/to_can_bus", 10);
 
-    // std::string my_param = this->get_parameter("joy_wire").as_string()
+    this->declare_parameter("connection_param", false);
+    connection_parameter = this->get_parameter("connection_param").get_value<bool>();
+    timer_ = this->create_wall_timer(
+      1000ms, std::bind(&AgrorobInterface::timer_callback, this));
 
 
     

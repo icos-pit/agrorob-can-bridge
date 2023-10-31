@@ -84,6 +84,8 @@ namespace agrorob_interface
       int engine_rotation_rpm;
       double wheelR;
       double refVelocity;
+      bool connection_parameter;
+      rclcpp::TimerBase::SharedPtr timer_;
 
       MovingAvarageFilter<10> filter;
         
