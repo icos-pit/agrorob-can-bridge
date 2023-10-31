@@ -85,7 +85,6 @@ namespace agrorob_interface
       double wheelR;
       double refVelocity;
       bool connection_parameter;
-      rclcpp::TimerBase::SharedPtr timer_;
 
       MovingAvarageFilter<10> filter;
         
