@@ -1,5 +1,6 @@
 #include <memory>
 #include <math.h>
+#include <cmath>
 
 #include "agrorob_driver/agrorob_interface.hpp"
 #include "agrorob_driver/velocity_controller.hpp"
@@ -16,6 +17,8 @@
 #include "agrorob_msgs/msg/tool_state.hpp"
 #include "agrorob_msgs/msg/remote_state.hpp"
 #include "agrorob_msgs/msg/robot_state.hpp"
+#include "agrorob_msgs/msg/logs.hpp"
+
 
 // #include "agrorob_msgs/msg/mode_control.hpp"
 // #include "agrorob_msgs/msg/robot_control.hpp"
@@ -27,11 +30,12 @@ using std::placeholders::_1;
 
 namespace agrorob_interface
 {
-  AgrorobInterface::AgrorobInterface() : Node("agrorob_interface"), velocity(100.0), last_joy_msg_time_(0), last_control_mode_change(0), last_engine_rpm_change(0),
+  AgrorobInterface::AgrorobInterface() : Node("agrorob_interface"), ii(0), velocity(100.0), last_joy_msg_time_(0), last_control_mode_change(0), last_engine_rpm_change(0),
   rpm_to_rad_s(0.10472), engine_rotation_rpm(140), wheelR(0.387), refVelocity(0.0), refAcceleration(0.0), use_velocity_controller(false),
   never_saw_joy_msg(true), joy_connectivity_status_holder(0), never_saw_can_msg(true), can_connectivity_status_holder(0), 
   agrorob_ready_to_move(false), initializing(true), connectivity_status_holder(0), refRotationVel(0.0)
   {
+    joy_msg_ = std::make_shared<sensor_msgs::msg::Joy>();
 
     can_id1 = initialize_can_frame();
     can_id25 = initialize_can_frame();
@@ -43,7 +47,7 @@ namespace agrorob_interface
     });
     
     joy_sub_ = this->create_subscription<sensor_msgs::msg::Joy>("joy", 10, [this](const sensor_msgs::msg::Joy::SharedPtr joy_msg) {
-                joy_msg_ = joy_msg;  never_saw_joy_msg = false;   last_joy_msg_time_ = this->get_clock()->now();  joy_callback();} );
+                joy_msg_ = joy_msg; never_saw_joy_msg = false;   last_joy_msg_time_ = this->get_clock()->now();  joy_callback();} );
 
     cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>("cmd_vel", 10, std::bind(&AgrorobInterface::cmd_vel_callback, this, _1));
 
@@ -52,6 +56,9 @@ namespace agrorob_interface
     tool_stats_pub_ = this->create_publisher<agrorob_msgs::msg::ToolState>("/agrorob/tool_state", 10);
     engine_stats_pub_ = this->create_publisher<agrorob_msgs::msg::EngineState>("/agrorob/engine_state", 10);
     failure_state_pub_ = this->create_publisher<agrorob_msgs::msg::FailureState>("/agrorob/failure_state", 10);
+
+    logs_pub_ = this->create_publisher<agrorob_msgs::msg::Logs>("/agrorob/logs", 10);
+
     raw_can_pub_ = this->create_publisher<can_msgs::msg::Frame>("/to_can_bus", 10);
 
     timer_ = this->create_wall_timer(10ms, std::bind(&AgrorobInterface::timer_callback, this));
@@ -61,178 +68,66 @@ namespace agrorob_interface
   void AgrorobInterface::timer_callback()
   {
 
-    if (!AgrorobInterface::check_can_and_joy_connectivity())
-    {
-      if(connectivity_status_holder != 1)
-      {
-        refVelocity = 0.0; refAcceleration = 0.0;
-        RCLCPP_ERROR(get_logger(), "Connectivity problem detected!");
-        connectivity_status_holder = 1;
-      }
-
-    }else //conectivity ok
-    {
-
-      AgrorobInterface::set_engine_rpm(joy_msg_);
-
-      if(connectivity_status_holder == 1)
-      {
-        RCLCPP_INFO(get_logger(), "Connectivity OK!");
-        connectivity_status_holder = 2;
-      }
-
-
-      if(remote_state_msg.auto_mode_enabled == 1)
-      {
-
-
-
-
-
-        if(!agrorob_ready_to_move)
-        {
-          if(initializing)
-            RCLCPP_INFO(this->get_logger(), "Initializing...");
-          can_id1.data[0] = 0;
-          can_id1.data[1] = 0;
-          can_id1.data[3] = 140;
-          can_id1.data[7] = 0;
-          can_id1.data[6] = 0;
-          can_id1.data[5] = 0;
-          can_id1.data[4] = 0;
-        }
-
+   
        
 
-        if(!engine_state_msg.engine_running)
-        {
-          if(initializing)
-            RCLCPP_INFO(this->get_logger(), "Engine is off, press B (red) for ignition");
+    
+    RCLCPP_INFO(this->get_logger(), "111111 %f rpm", refVelocity);
+    // joy_msg_->axes[3] = 0.5;
 
-          if(joy_msg_->buttons[1] == 1)
-          {
-            RCLCPP_INFO(this->get_logger(), "Ignition command send, press X (blue) again to turn off engine");
-            can_id1.data[2] = 1; // Engine off
-          }else
-            can_id1.data[2] = 0; // Ignition inactive
-
-        }
-
-        if(engine_state_msg.engine_running)
-        {
-
-          if(joy_msg_->buttons[2] == 1)
-          {
-              RCLCPP_INFO(this->get_logger(),"Engine turn off command send, press B (red) for ignition");
-              can_id1.data[1] = 1;
-              agrorob_ready_to_move = false;
-              initializing = true;
-
-          }else
-          {
-            can_id1.data[1] = 0; // The internal combustion engine can work
-          }
+    // can_id25.data[1] = (joy_msg_->axes[3] * -90) + 90;  //steering 
 
 
-          if(!agrorob_ready_to_move)
-          {
-            RCLCPP_INFO(this->get_logger(), "Engine is running.");
-            can_id1.data[0] = 0;
-            can_id1.data[1] = 0;
-            can_id1.data[2] = 0;
-            can_id1.data[3] = engine_rotation_rpm;
-            can_id1.data[4] = 1; // 0 - brake active; 1 - brake off
-            can_id1.data[5] = 1; // 0 - gear not active; 1 - gear ready to go
-            can_id1.data[7] = 0;
-            can_id25.data[0] = 2;
-            RCLCPP_INFO(this->get_logger(), "Car like mode activated.");
-            RCLCPP_INFO(this->get_logger(), "Agrorob ready to move.");
-            agrorob_ready_to_move = true;
+    const double PI = 3.14159;
+    const int SAMPLE_RATE = 100; // Adjust the sample rate as needed
+    const double MAX_AMPLITUDE = 2.0;
 
-          }
-          
-        }
+    
+    refVelocity = MAX_AMPLITUDE * std::sin(2 * PI * ii / SAMPLE_RATE);
+    // if (refVelocity < 0.0)
+    //   refVelocity *= 0.0;
 
-        can_id25.data[1] = (joy_msg_->axes[3] * -90) + 90;  //steering 
+    ii++;
+    if (ii == 100)
+      ii = 0;
+
+  
+    can_id1.data[3] = 170; //engine rotation
+
+    double velocity_ms = 0;//(2.0 * M_PI * wheelR * tool_state_msg.wheels_average_rotational_speed_rpm ) / 60.0;
+    // double velocity_ms = (2.0 * M_PI * wheelR * 20 * std::sin(2 * PI * (ii + 20) / SAMPLE_RATE) ) / 60.0;
+    // if (velocity_ms < 0.0)
+    //   velocity_ms *= 0.0;
+
+    logs_msg.velocity_ms = velocity_ms;
+    velocity.update(filter.update(velocity_ms), refVelocity, refAcceleration);
+
+
+    logs_msg.direction_input = velocity.getDirection();
+
+    logs_msg.velocity_input = velocity.getThrottle();
+
+    logs_msg.ref_velocity = refVelocity;
+  
 
 
 
-        if((this->get_clock()->now().seconds() - last_control_mode_change.seconds()) > 0.5)
-        {
-            if (joy_msg_->buttons[4] == 1) {
 
-              last_control_mode_change = this->get_clock()->now();
-
-              if (use_velocity_controller) {
-                  use_velocity_controller = false; 
-                  RCLCPP_INFO(this->get_logger(), "Gamepad control activated");
-
-              } else {
-                  use_velocity_controller = true; 
-                  RCLCPP_INFO(this->get_logger(), "cmd_vel Velocity controller activated.");
-              }
-        }
-
-        }
-      
+  can_id1.header.stamp = this->get_clock()->now();
+  can_id25.header.stamp = this->get_clock()->now();
 
 
-        
-
-        if(use_velocity_controller)
-        {
-          can_id1.data[3] = 170; //engine rotation
-          double velocity_ms = (2.0 * M_PI * wheelR * tool_state_msg.wheels_average_rotational_speed_rpm ) / 60.0;
-          velocity.update(filter.update(velocity_ms), refVelocity, refAcceleration);
-          can_id25.data[2] = velocity.getDirection();
-          can_id25.data[3] = velocity.getThrottle();
-          
-          
-        }else
-        {
-           if(joy_msg_->axes[1] > 0.1)     //direction of movement
-            can_id25.data[2] = 1;
-          else if(joy_msg_->axes[1] < -0.1)
-            can_id25.data[2] = 2;
-          else
-            can_id25.data[2] = 0;
-          
-          can_id25.data[3] = abs(joy_msg_->axes[1]) * 100;
-          can_id25.data[4] = 200;
-          can_id25.data[5] = 20;
-          can_id25.data[6] = 180;
-          can_id1.data[3] = engine_rotation_rpm;
-
-        }
+  raw_can_pub_->publish(can_id1);
+  raw_can_pub_->publish(can_id25); 
+  logs_pub_->publish(logs_msg);
+    
 
 
-        if(joy_msg_->axes[5] < -0.9) //break LR
-        {
-          can_id25.data[3] = 0;
-          can_id1.data[4] = 0;
-          
-          RCLCPP_INFO(this->get_logger(), "************** Breaking **************");
-        }
-        else
-        {
-          can_id1.data[4] = 1;
-        }
-
-
-
-        can_id1.header.stamp = this->get_clock()->now();
-        can_id25.header.stamp = this->get_clock()->now();
-
-        raw_can_pub_->publish(can_id1);
-        raw_can_pub_->publish(can_id25); 
-          
-        initializing = false;
-      } 
        
-
+  RCLCPP_INFO(this->get_logger(), "ddddd %f rpm", refVelocity);
      
 
-    }
+    
     
    
         
@@ -242,68 +137,7 @@ namespace agrorob_interface
   }
 
 
-  bool AgrorobInterface::check_can_and_joy_connectivity()
-  {
-  
-    if(never_saw_joy_msg)
-    {
-      if(joy_connectivity_status_holder != 1)
-      {
-        RCLCPP_WARN(get_logger(), "Joy msgs not present, waititng ...");
-        joy_connectivity_status_holder = 1;
-      }    
-
-    }else if ((this->get_clock()->now().seconds() - last_joy_msg_time_.seconds()) > 2.0) //gamepad disconnected after connecting
-    {
-
-      if(joy_connectivity_status_holder != 2)
-      {
-        RCLCPP_ERROR(get_logger(), "Joy msg is gone, stopping the robot and waiting ...");
-        joy_connectivity_status_holder = 2;
-      }
-      
-    }else{
-
-      if(joy_connectivity_status_holder != 3)
-      {
-        RCLCPP_INFO(get_logger(), "OK: Joy msg present.");
-        joy_connectivity_status_holder = 3;
-      }
-    }
-
-    if(never_saw_can_msg)
-    {
-      if(can_connectivity_status_holder != 1)
-      {
-        RCLCPP_WARN(get_logger(), "CAN msgs not present, waititng ...");
-        can_connectivity_status_holder = 1;
-      }    
-
-    }else if ((this->get_clock()->now().seconds() - last_can_msg_time_.seconds()) > 5.0) //gamepad disconnected after connecting
-    {
-
-      if(can_connectivity_status_holder != 2)
-      {
-        RCLCPP_ERROR(get_logger(), "CAN status msg is gone, stopping the robot and waiting ...");
-        can_connectivity_status_holder = 2;
-      }
-      
-    }else{
-
-      if(can_connectivity_status_holder != 3)
-      {
-        RCLCPP_INFO(get_logger(), "OK: CAN msg present.");
-        can_connectivity_status_holder = 3;
-      }
-    
-    
-    
-    }
-
-    return (can_connectivity_status_holder == 3 && joy_connectivity_status_holder == 3);
-
-
-  }
+ 
 
   can_msgs::msg::Frame AgrorobInterface::initialize_can_frame()
   {
@@ -339,7 +173,8 @@ namespace agrorob_interface
 
   void AgrorobInterface::cmd_vel_callback(const geometry_msgs::msg::Twist & cmd_vel_msg)
   {
-    refVelocity = cmd_vel_msg.linear.x;
+
+    // refVelocity = cmd_vel_msg.linear.x;
     refRotationVel = cmd_vel_msg.angular.z;
   }
 

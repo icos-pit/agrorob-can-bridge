@@ -13,10 +13,14 @@ namespace agrorob_interface
     double brake_;
     
     double dt_ = 0.0; 
-    double controlScale = 50.0;
+    double controlScale = 100.0;
     //BCM pin numbering mode
-    double kd = 0.4; 
-    double ki = 0.1;
+    // double kd = 0.4; 
+    // double ki = 0.1;
+    double kd = 0.15; 
+    double ki = 0.03;
+
+
     double kf = 0.0;
 
     double errorIntegral = 0.0;
@@ -63,15 +67,9 @@ namespace agrorob_interface
         void update(double velocity, double referenceVelocity, double referenceVelocityRate )
         {
             
-            // Check, if car goes to opossite direction than requesed, If so, start braking.
-            if ((referenceVelocity > 0.0 && direction == 2) || (referenceVelocity < 0.0 && direction == 1))
-            {
-                if (velocity > 0.01)
-                    ThrottleValue = 0;   //else is to change direction of move later
-        
-            }
+      
 
-
+           
             // If going backwards, change sign of refVel to opposite, control then is the same as going forward
             // if (tbVel_->getGear() == 2){
             //     referenceVelocity = -referenceVelocity;
@@ -86,19 +84,19 @@ namespace agrorob_interface
 
             if (velocity > (1.5*abs(referenceVelocity)) ) {
                 ThrottleValue = 0;
-                direction == 0;
+                direction = 0;
                 // controlSignal = -1.0;
 
             } else {
 
                 if (referenceVelocity <  - 0.01)
-                    direction == 2;
+                    direction = 2;
 
-                else if (referenceVelocity <  0.01)
-                    direction == 0;
+                else if (referenceVelocity >  0.01)
+                    direction = 1;
 
                 else
-                    direction == 1; 
+                    direction = 0; 
 
 
                 errorIntegral += velocityError*(dt_);
@@ -113,13 +111,23 @@ namespace agrorob_interface
 
                 if (controlSignal > 1.0)
                     controlSignal = 1.0;
-                if (controlSignal < 0.0)
-                    controlSignal = 0.0;
+                if (controlSignal < -1.0)
+                    controlSignal = -1.0;
+
+                controlSignal = abs(controlSignal);
+                
             }
 
             // RCLCPP_INFO_STREAM(nh_->get_logger(), "Control signal: " << controlSignal);
 
             ThrottleValue = controlSignal*controlScale;
+
+            if ((referenceVelocity > 0.0 && direction == 2) || (referenceVelocity < 0.0 && direction == 1))
+            {
+                if (velocity > 0.02)
+                    ThrottleValue = 0;   //else is to change direction of move later
+        
+            }
 
 
         }
