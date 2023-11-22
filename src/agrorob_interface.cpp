@@ -27,13 +27,14 @@
 
 using namespace std;
 using std::placeholders::_1;
-
+ 
 namespace agrorob_interface
 {
-  AgrorobInterface::AgrorobInterface() : Node("agrorob_interface"), ii(0), velocity(100.0), last_joy_msg_time_(0), last_control_mode_change(0), last_engine_rpm_change(0),
-  rpm_to_rad_s(0.10472), engine_rotation_rpm(140), wheelR(0.387), refVelocity(0.0), refAcceleration(0.0), use_velocity_controller(false),
-  never_saw_joy_msg(true), joy_connectivity_status_holder(0), never_saw_can_msg(true), can_connectivity_status_holder(0), 
-  agrorob_ready_to_move(false), initializing(true), connectivity_status_holder(0), refRotationVel(0.0)
+  AgrorobInterface::AgrorobInterface() : Node("agrorob_interface"), agrorob_ready_to_move(false), initializing(true), use_velocity_controller(false), 
+  rpm_to_rad_s(0.10472), engine_rotation_rpm(140), ii(0), wheelR(0.387), refVelocity(0.0), refRotationVel(0.0), refAcceleration(0.0),
+  never_saw_joy_msg(true), never_saw_can_msg(true), last_joy_msg_time_(0), last_can_msg_time_(0), last_control_mode_change(0), last_engine_rpm_change(0),
+  joy_connectivity_status_holder(0),  can_connectivity_status_holder(0), connectivity_status_holder(0), velocity(100.0)
+  
   {
     joy_msg_ = std::make_shared<sensor_msgs::msg::Joy>();
 
@@ -80,7 +81,7 @@ namespace agrorob_interface
 
     const double PI = 3.14159;
     const int SAMPLE_RATE = 100; // Adjust the sample rate as needed
-    const double MAX_AMPLITUDE = 2.0;
+    const double MAX_AMPLITUDE = 1;
 
     
     refVelocity = MAX_AMPLITUDE * std::sin(2 * PI * ii / SAMPLE_RATE);
@@ -94,8 +95,8 @@ namespace agrorob_interface
   
     can_id1.data[3] = 170; //engine rotation
 
-    double velocity_ms = 0;//(2.0 * M_PI * wheelR * tool_state_msg.wheels_average_rotational_speed_rpm ) / 60.0;
-    // double velocity_ms = (2.0 * M_PI * wheelR * 20 * std::sin(2 * PI * (ii + 20) / SAMPLE_RATE) ) / 60.0;
+    double velocity_ms = 1;//(2.0 * M_PI * wheelR * tool_state_msg.wheels_average_rotational_speed_rpm ) / 60.0;
+    // double velocity_ms = abs((2.0 * M_PI * wheelR * 20 * std::sin(2 * PI * (ii + 20) / SAMPLE_RATE) ) / 60.0);
     // if (velocity_ms < 0.0)
     //   velocity_ms *= 0.0;
 
@@ -107,7 +108,7 @@ namespace agrorob_interface
 
     logs_msg.velocity_input = velocity.getThrottle();
 
-    logs_msg.ref_velocity = refVelocity;
+    logs_msg.ref_velocity = velocity.getRef();
   
 
 

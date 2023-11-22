@@ -37,7 +37,7 @@ namespace agrorob_interface
 
     private:
 
-      VelocityController velocity;
+      
      
       void set_engine_rpm(const sensor_msgs::msg::Joy::SharedPtr joy_msg);
       bool check_can_and_joy_connectivity();
@@ -108,6 +108,8 @@ namespace agrorob_interface
       int connectivity_status_holder;
 
       MovingAvarageFilter<10> filter;
+
+      VelocityController velocity;
         
         
       
