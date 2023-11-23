@@ -16,6 +16,7 @@
 #include "agrorob_msgs/msg/tool_state.hpp"
 #include "agrorob_msgs/msg/remote_state.hpp"
 #include "agrorob_msgs/msg/robot_state.hpp"
+#include "agrorob_msgs/msg/logs.hpp"
 
 // #include "agrorob_msgs/msg/mode_control.hpp"
 // #include "agrorob_msgs/msg/robot_control.hpp"
@@ -27,10 +28,11 @@ using std::placeholders::_1;
 
 namespace agrorob_interface
 {
-  AgrorobInterface::AgrorobInterface() : Node("agrorob_interface"), velocity(100.0), last_joy_msg_time_(0), last_control_mode_change(0), last_engine_rpm_change(0),
-  rpm_to_rad_s(0.10472), engine_rotation_rpm(140), wheelR(0.387), refVelocity(0.0), refAcceleration(0.0), use_velocity_controller(false),
-  never_saw_joy_msg(true), joy_connectivity_status_holder(0), never_saw_can_msg(true), can_connectivity_status_holder(0), 
-  agrorob_ready_to_move(false), initializing(true), connectivity_status_holder(0), refRotationVel(0.0)
+  AgrorobInterface::AgrorobInterface() : Node("agrorob_interface"), agrorob_ready_to_move(false), initializing(true), use_velocity_controller(false), 
+  rpm_to_rad_s(0.10472), engine_rotation_rpm(140), ii(0), wheelR(0.387), refVelocity(0.0), refRotationVel(0.0), refAcceleration(0.0),
+  never_saw_joy_msg(true), never_saw_can_msg(true), last_joy_msg_time_(0), last_can_msg_time_(0), last_control_mode_change(0), last_engine_rpm_change(0),
+  joy_connectivity_status_holder(0),  can_connectivity_status_holder(0), connectivity_status_holder(0), velocity(100.0)
+  
   {
 
     can_id1 = initialize_can_frame();
@@ -53,6 +55,7 @@ namespace agrorob_interface
     engine_stats_pub_ = this->create_publisher<agrorob_msgs::msg::EngineState>("/agrorob/engine_state", 10);
     failure_state_pub_ = this->create_publisher<agrorob_msgs::msg::FailureState>("/agrorob/failure_state", 10);
     raw_can_pub_ = this->create_publisher<can_msgs::msg::Frame>("/to_can_bus", 10);
+    logs_pub_ = this->create_publisher<agrorob_msgs::msg::Logs>("/agrorob/logs", 10);
 
     timer_ = this->create_wall_timer(10ms, std::bind(&AgrorobInterface::timer_callback, this));
 
@@ -183,9 +186,16 @@ namespace agrorob_interface
         {
           can_id1.data[3] = 170; //engine rotation
           double velocity_ms = (2.0 * M_PI * wheelR * tool_state_msg.wheels_average_rotational_speed_rpm ) / 60.0;
+
+          logs_msg.velocity_ms = velocity_ms;
+
           velocity.update(filter.update(velocity_ms), refVelocity, refAcceleration);
           can_id25.data[2] = velocity.getDirection();
           can_id25.data[3] = velocity.getThrottle();
+
+          logs_msg.direction_input = velocity.getDirection();
+          logs_msg.velocity_input = velocity.getThrottle();
+          logs_msg.ref_velocity = velocity.getRef();
           
           
         }else
@@ -225,6 +235,7 @@ namespace agrorob_interface
 
         raw_can_pub_->publish(can_id1);
         raw_can_pub_->publish(can_id25); 
+        logs_pub_->publish(logs_msg);
           
         initializing = false;
       } 

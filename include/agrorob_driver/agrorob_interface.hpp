@@ -16,6 +16,7 @@
 #include "agrorob_msgs/msg/tool_state.hpp"
 #include "agrorob_msgs/msg/remote_state.hpp"
 #include "agrorob_msgs/msg/robot_state.hpp"
+#include "agrorob_msgs/msg/logs.hpp"
 
 #include "agrorob_driver/velocity_controller.hpp"
 
@@ -36,7 +37,7 @@ namespace agrorob_interface
 
     private:
 
-      VelocityController velocity;
+      
      
       void set_engine_rpm(const sensor_msgs::msg::Joy::SharedPtr joy_msg);
       bool check_can_and_joy_connectivity();
@@ -55,6 +56,7 @@ namespace agrorob_interface
       rclcpp::Publisher<agrorob_msgs::msg::ToolState>::SharedPtr tool_stats_pub_;
       rclcpp::Publisher<agrorob_msgs::msg::EngineState>::SharedPtr engine_stats_pub_; 
       rclcpp::Publisher<agrorob_msgs::msg::FailureState>::SharedPtr failure_state_pub_; 
+      rclcpp::Publisher<agrorob_msgs::msg::Logs>::SharedPtr logs_pub_; 
       
       rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr raw_can_pub_;
 
@@ -66,11 +68,13 @@ namespace agrorob_interface
       agrorob_msgs::msg::ToolState tool_state_msg = agrorob_msgs::msg::ToolState();
       agrorob_msgs::msg::EngineState engine_state_msg = agrorob_msgs::msg::EngineState();
       agrorob_msgs::msg::FailureState failure_state_msg =  agrorob_msgs::msg::FailureState();
+      agrorob_msgs::msg::Logs logs_msg =  agrorob_msgs::msg::Logs();
 
-      can_msgs::msg::Frame can_id1;
+      can_msgs::msg::Frame can_id1 ;
       can_msgs::msg::Frame can_id25;
 
       sensor_msgs::msg::Joy::SharedPtr joy_msg_ = std::make_shared<sensor_msgs::msg::Joy>();
+      
       can_msgs::msg::Frame::SharedPtr can_msg_ = std::make_shared<can_msgs::msg::Frame>();
       
       // auto mode_control_message = agrorob_msgs::msg::ModeControl();
@@ -84,6 +88,7 @@ namespace agrorob_interface
 
       double rpm_to_rad_s;
       int engine_rotation_rpm;
+      int ii;
       double wheelR;
 
       double refVelocity;
@@ -103,6 +108,8 @@ namespace agrorob_interface
       int connectivity_status_holder;
 
       MovingAvarageFilter<10> filter;
+
+      VelocityController velocity;
         
         
       

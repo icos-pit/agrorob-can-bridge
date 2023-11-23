@@ -13,10 +13,12 @@ namespace agrorob_interface
     double brake_;
     
     double dt_ = 0.0; 
-    double controlScale = 50.0;
+    double controlScale = 100.0;
     //BCM pin numbering mode
-    double kd = 0.4; 
-    double ki = 0.1;
+    // double kd = 0.4; 
+    // double ki = 0.1;
+    double kd = 0.15; 
+    double ki = 0.03;
     double kf = 0.0;
 
     double errorIntegral = 0.0;
@@ -28,6 +30,7 @@ namespace agrorob_interface
 
     int direction = 0; //0 - the robot is not moving; 1 - forward drive  2 - driving backwards 
     int ThrottleValue = 0;
+    double refVel = 0.0;
 
     int breakCounter = 0;
     
@@ -58,68 +61,67 @@ namespace agrorob_interface
         //    return 0.0;
         }
         
+        double getRef()
+        {
+            return refVel;
+        //    return 0.0;
+        }
       
 
         void update(double velocity, double referenceVelocity, double referenceVelocityRate )
         {
-            
-            // Check, if car goes to opossite direction than requesed, If so, start braking.
-            if ((referenceVelocity > 0.0 && direction == 2) || (referenceVelocity < 0.0 && direction == 1))
-            {
-                if (velocity > 0.01)
-                    ThrottleValue = 0;   //else is to change direction of move later
-        
-            }
-
-
-            // If going backwards, change sign of refVel to opposite, control then is the same as going forward
-            // if (tbVel_->getGear() == 2){
-            //     referenceVelocity = -referenceVelocity;
-            // }
-            
-            double velocityError = referenceVelocity - velocity;
             double controlSignal = 0.0;
+           
 
-            // if (velocity <= referenceVelocity && referenceVelocity > 0.0)
-            //     ThrottleValue = 0;
-            
+            if ((referenceVelocity > 0.0 && direction == 2) || (referenceVelocity < 0.0 && direction == 1)) //if robot was going different direction than expected
+            {
+                if (velocity > 0.02)
+                    referenceVelocity = 0;   //stop first
+                    //calculate control signal
+        
+            } else 
+            {
+                if (referenceVelocity >  0.01)
+                    direction = 1;  // Forward
 
-            if (velocity > (1.5*abs(referenceVelocity)) ) {
-                ThrottleValue = 0;
-                direction == 0;
-                // controlSignal = -1.0;
-
-            } else {
-
-                if (referenceVelocity <  - 0.01)
-                    direction == 2;
-
-                else if (referenceVelocity <  0.01)
-                    direction == 0;
+                else if (referenceVelocity <  - 0.01)
+                    direction = 2;  // Backward
 
                 else
-                    direction == 1; 
-
-
-                errorIntegral += velocityError*(dt_);
-                double velocityRate = velocityRateFilter.update((velocity - prevVelocity)*dt_);
-                prevVelocity = velocity;
-                double velocityRateError = referenceVelocityRate - velocityRate;
-                
-
-                controlSignal = kd*velocityError + ki*errorIntegral + kf*velocityRateError;
-
-
-
-                if (controlSignal > 1.0)
-                    controlSignal = 1.0;
-                if (controlSignal < 0.0)
-                    controlSignal = 0.0;
+                    direction = 0;  // not moving
             }
+            
+            
+
+            double velocityError = referenceVelocity - velocity;
+            
+            errorIntegral += velocityError*(dt_);
+            double velocityRate = velocityRateFilter.update((velocity - prevVelocity)*dt_);
+            prevVelocity = velocity;
+            double velocityRateError = referenceVelocityRate - velocityRate;
+            
+
+            controlSignal = kd*velocityError + ki*errorIntegral + kf*velocityRateError;
+
+
+            if (controlSignal > 1.0)
+                controlSignal = 1.0;
+            if (controlSignal < -1.0)
+                controlSignal = -1.0;
+
+            controlSignal = abs(controlSignal);
+            
 
             // RCLCPP_INFO_STREAM(nh_->get_logger(), "Control signal: " << controlSignal);
 
+            if (velocity > (1.5*abs(referenceVelocity)) ) { //safty stop in case robot is goin 1.5 times faster than ref_vel
+                controlSignal = 0;
+                direction = 0;
+            } 
+
             ThrottleValue = controlSignal*controlScale;
+
+            refVel = referenceVelocity;
 
 
         }
