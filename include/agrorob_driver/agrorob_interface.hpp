@@ -90,6 +90,8 @@ namespace agrorob_interface
       int engine_rotation_rpm;
       int ii;
       double wheelR;
+      double wheelBase;
+      double maxSteeringAngle;
 
       double refVelocity;
       double refRotationVel;

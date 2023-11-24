@@ -28,8 +28,8 @@ using std::placeholders::_1;
 
 namespace agrorob_interface
 {
-  AgrorobInterface::AgrorobInterface() : Node("agrorob_interface"), agrorob_ready_to_move(false), initializing(true), use_velocity_controller(false), 
-  rpm_to_rad_s(0.10472), engine_rotation_rpm(140), ii(0), wheelR(0.387), refVelocity(0.0), refRotationVel(0.0), refAcceleration(0.0),
+  AgrorobInterface::AgrorobInterface() : Node("agrorob_interface"), agrorob_ready_to_move(false), initializing(true), use_velocity_controller(true), 
+  rpm_to_rad_s(0.10472), engine_rotation_rpm(140), ii(0), wheelR(0.387), wheelBase(3.0), maxSteeringAngle(1.5708), refVelocity(0.0), refRotationVel(0.0), refAcceleration(0.0),
   never_saw_joy_msg(true), never_saw_can_msg(true), last_joy_msg_time_(0), last_can_msg_time_(0), last_control_mode_change(0), last_engine_rpm_change(0),
   joy_connectivity_status_holder(0),  can_connectivity_status_holder(0), connectivity_status_holder(0), velocity(100.0)
   
@@ -41,11 +41,11 @@ namespace agrorob_interface
     can_id25.id = 25; 
 
     raw_can_sub_ = this->create_subscription<can_msgs::msg::Frame>("from_can_bus", 10, [this](const can_msgs::msg::Frame::SharedPtr can_msg){
-      can_msg_ = can_msg; never_saw_can_msg = false; last_can_msg_time_ = this->get_clock()->now(); can_callback();
+      can_msg_ = std::move(can_msg); never_saw_can_msg = false; last_can_msg_time_ = this->get_clock()->now(); can_callback();
     });
     
     joy_sub_ = this->create_subscription<sensor_msgs::msg::Joy>("joy", 10, [this](const sensor_msgs::msg::Joy::SharedPtr joy_msg) {
-                joy_msg_ = joy_msg;  never_saw_joy_msg = false;   last_joy_msg_time_ = this->get_clock()->now();  joy_callback();} );
+                joy_msg_ = std::move(joy_msg);  never_saw_joy_msg = false;   last_joy_msg_time_ = this->get_clock()->now();  joy_callback();} );
 
     cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>("cmd_vel", 10, std::bind(&AgrorobInterface::cmd_vel_callback, this, _1));
 
@@ -85,7 +85,7 @@ namespace agrorob_interface
       }
 
 
-      if(remote_state_msg.auto_mode_enabled == 1)
+      // if(remote_state_msg.auto_mode_enabled == 1)
       {
 
 
@@ -156,7 +156,7 @@ namespace agrorob_interface
           
         }
 
-        can_id25.data[1] = (joy_msg_->axes[3] * -90) + 90;  //steering 
+        
 
 
 
@@ -174,18 +174,19 @@ namespace agrorob_interface
                   use_velocity_controller = true; 
                   RCLCPP_INFO(this->get_logger(), "cmd_vel Velocity controller activated.");
               }
-        }
+          }
 
         }
       
 
-
+        
         
 
         if(use_velocity_controller)
         {
           can_id1.data[3] = 170; //engine rotation
           double velocity_ms = (2.0 * M_PI * wheelR * tool_state_msg.wheels_average_rotational_speed_rpm ) / 60.0;
+          RCLCPP_INFO(this->get_logger(), "speeeeed: %d ms", tool_state_msg.wheels_average_rotational_speed_rpm);
 
           logs_msg.velocity_ms = velocity_ms;
 
@@ -193,9 +194,17 @@ namespace agrorob_interface
           can_id25.data[2] = velocity.getDirection();
           can_id25.data[3] = velocity.getThrottle();
 
+          double steering_angle = atan2(wheelBase * refRotationVel, refVelocity);
+          steering_angle = min(max(steering_angle, -maxSteeringAngle), maxSteeringAngle);
+          steering_angle *= (180.0 / M_PI);
+          
+          can_id25.data[1] = steering_angle + 90;  //steering map to 0 to 180 degrees
+
           logs_msg.direction_input = velocity.getDirection();
           logs_msg.velocity_input = velocity.getThrottle();
           logs_msg.ref_velocity = velocity.getRef();
+          logs_msg.velocity_ms = velocity_ms;
+          
           
           
         }else
@@ -206,6 +215,8 @@ namespace agrorob_interface
             can_id25.data[2] = 2;
           else
             can_id25.data[2] = 0;
+
+          can_id25.data[1] = (joy_msg_->axes[3] * -90) + 90;  //steering 
           
           can_id25.data[3] = abs(joy_msg_->axes[1]) * 100;
           can_id25.data[4] = 200;
@@ -422,6 +433,7 @@ namespace agrorob_interface
         robot_state_msg.right_front_wheel_rotational_speed_rad_s  = can_msg_->data[5] * rpm_to_rad_s;
         robot_state_msg.left_rear_wheel_rotational_speed_rad_s    = can_msg_->data[6] * rpm_to_rad_s;
         robot_state_msg.right_rear_wheel_rotational_speed_rad_s   = can_msg_->data[7] * rpm_to_rad_s;
+        
         robot_state_pub_->publish(robot_state_msg);
         break;
       }
@@ -452,6 +464,7 @@ namespace agrorob_interface
         tool_state_msg.hydraulic_oil_under_min_level       = can_msg_->data[4]; 
         tool_state_msg.hydraulic_oil_above_max_level       = can_msg_->data[5]; 
         tool_state_msg.wheels_average_rotational_speed_rpm = can_msg_->data[6];
+        RCLCPP_INFO(this->get_logger(), "speeeeed: %d mss", tool_state_msg.wheels_average_rotational_speed_rpm);
         tool_stats_pub_->publish(tool_state_msg);
         break; 
       }
