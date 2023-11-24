@@ -85,7 +85,7 @@ namespace agrorob_interface
       }
 
 
-      // if(remote_state_msg.auto_mode_enabled == 1)
+      if(remote_state_msg.auto_mode_enabled == 1)
       {
 
 
@@ -464,7 +464,7 @@ namespace agrorob_interface
         tool_state_msg.hydraulic_oil_under_min_level       = can_msg_->data[4]; 
         tool_state_msg.hydraulic_oil_above_max_level       = can_msg_->data[5]; 
         tool_state_msg.wheels_average_rotational_speed_rpm = can_msg_->data[6];
-        RCLCPP_INFO(this->get_logger(), "speeeeed: %d mss", tool_state_msg.wheels_average_rotational_speed_rpm);
+        // RCLCPP_INFO(this->get_logger(), "speeeeed: %d mss", tool_state_msg.wheels_average_rotational_speed_rpm);
         tool_stats_pub_->publish(tool_state_msg);
         break; 
       }
