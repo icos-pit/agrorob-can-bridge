@@ -95,7 +95,15 @@ namespace agrorob_interface
   
     can_id1.data[3] = 170; //engine rotation
 
-    double velocity_ms = 1;//(2.0 * M_PI * wheelR * tool_state_msg.wheels_average_rotational_speed_rpm ) / 60.0;
+    double velocity_ms = 0.0;//(2.0 * M_PI * wheelR * tool_state_msg.wheels_average_rotational_speed_rpm ) / 60.0;
+
+
+    if (logs_msg.direction_input == 1 || logs_msg.direction_input == 2)
+      velocity_ms = 0.8;
+
+    if (logs_msg.direction_input == 0)
+      velocity_ms = 0;
+
     // double velocity_ms = abs((2.0 * M_PI * wheelR * 20 * std::sin(2 * PI * (ii + 20) / SAMPLE_RATE) ) / 60.0);
     // if (velocity_ms < 0.0)
     //   velocity_ms *= 0.0;
@@ -105,6 +113,10 @@ namespace agrorob_interface
 
 
     logs_msg.direction_input = velocity.getDirection();
+
+    
+    
+
 
     logs_msg.velocity_input = velocity.getThrottle();
 
