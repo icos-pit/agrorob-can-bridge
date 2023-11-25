@@ -73,12 +73,11 @@ namespace agrorob_interface
             double controlSignal = 0.0;
            
 
-            if ((referenceVelocity > 0.0 && direction == 2) || (referenceVelocity < 0.0 && direction == 1)) //if robot was going different direction than expected
+            if ((referenceVelocity > 0.0 && velocity > 0.10 && direction == 2) || 
+                (referenceVelocity < 0.0 && velocity > 0.10 && direction == 1)) //if robot was going different direction than expected
             {
-                if (velocity > 0.02)
-                    referenceVelocity = 0;   //stop first
-                    //calculate control signal
-        
+                referenceVelocity = 0;   //stop first
+                
             } else 
             {
                 if (referenceVelocity >  0.01)
@@ -89,6 +88,8 @@ namespace agrorob_interface
 
                 else
                     direction = 0;  // not moving
+                
+                referenceVelocity = abs(referenceVelocity);
             }
             
             
@@ -106,10 +107,10 @@ namespace agrorob_interface
 
             if (controlSignal > 1.0)
                 controlSignal = 1.0;
-            if (controlSignal < -1.0)
-                controlSignal = -1.0;
+            if (controlSignal < 0.0)
+                controlSignal = 0;
 
-            controlSignal = abs(controlSignal);
+            
             
 
             // RCLCPP_INFO_STREAM(nh_->get_logger(), "Control signal: " << controlSignal);
