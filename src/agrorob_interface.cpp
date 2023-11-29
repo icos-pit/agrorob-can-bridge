@@ -194,11 +194,12 @@ namespace agrorob_interface
           can_id25.data[2] = velocity.getDirection();
           can_id25.data[3] = velocity.getThrottle();
 
-          double steering_angle = atan2(wheelBase * refRotationVel, refVelocity);
-          steering_angle = min(max(steering_angle, -maxSteeringAngle), maxSteeringAngle);
-          steering_angle *= (180.0 / M_PI);
-          
-          can_id25.data[1] = steering_angle + 90;  //steering map to 0 to 180 degrees
+          // double steering_angle = atan2(wheelBase * refRotationVel, refVelocity);
+          // // steering_angle = min(max(steering_angle, -maxSteeringAngle), maxSteeringAngle);
+          // // steering_angle *= (180.0 / M_PI);
+          // // double steeringAngle = atan(wheelBase / refRotationVel);
+          // can_id25.data[1] = steering_angle + 90;  //steering map to 0 to 180 degrees
+          can_id25.data[1] = (joy_msg_->axes[3] * -90) + 90;  //steering 
 
           logs_msg.direction_input = velocity.getDirection();
           logs_msg.velocity_input = velocity.getThrottle();
