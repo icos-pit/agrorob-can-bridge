@@ -362,7 +362,7 @@ namespace agrorob_interface
 
   void AgrorobInterface::cmd_vel_callback(const geometry_msgs::msg::Twist & cmd_vel_msg)
   {
-    refVelocity = cmd_vel_msg.linear.x;
+    refVelocity = cmd_vel_msg.linear.x * 0.7;
     refRotationVel = cmd_vel_msg.angular.z;
   }
 
