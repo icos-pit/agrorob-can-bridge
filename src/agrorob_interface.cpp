@@ -29,7 +29,7 @@ using std::placeholders::_1;
 namespace agrorob_interface
 {
   AgrorobInterface::AgrorobInterface() : Node("agrorob_interface"), agrorob_ready_to_move(false), initializing(true), use_velocity_controller(true), 
-  rpm_to_rad_s(0.10472), engine_rotation_rpm(140), ii(0), wheelR(0.387), wheelBase(3.0), maxSteeringAngle(1.5708), refVelocity(0.0), refRotationVel(0.0), refAcceleration(0.0),
+  rpm_to_rad_s(0.10472), engine_rotation_rpm(140), ii(0), wheelR(0.387*0.94), wheelBase(3.0), maxSteeringAngle(1.5708), refVelocity(0.0), refRotationVel(0.0), refAcceleration(0.0),
   never_saw_joy_msg(true), never_saw_can_msg(true), last_joy_msg_time_(0), last_can_msg_time_(0), last_control_mode_change(0), last_engine_rpm_change(0),
   joy_connectivity_status_holder(0),  can_connectivity_status_holder(0), connectivity_status_holder(0), velocity(100.0)
   
@@ -362,7 +362,7 @@ namespace agrorob_interface
 
   void AgrorobInterface::cmd_vel_callback(const geometry_msgs::msg::Twist & cmd_vel_msg)
   {
-    refVelocity = cmd_vel_msg.linear.x * 0.7;
+    refVelocity = cmd_vel_msg.linear.x * 0.43; // max ref velocity is 0.65 but CMD_vel max is 1.5 hence 1.5*0.43 = 0.65
     refRotationVel = cmd_vel_msg.angular.z;
   }
 

@@ -1,7 +1,6 @@
 #pragma once
 #include <iostream>
 #include <agrorob_driver/digital_filters.hpp>
-// #include <agrorob_driver/adrc_eso.hpp>
 
 
 namespace agrorob_interface
@@ -18,7 +17,8 @@ namespace agrorob_interface
     // double kd = 0.4; 
     // double ki = 0.1;
     double kd = 0.15; 
-    double ki = 0.03;
+    // double ki = 0.03;
+    double ki = 0.0;
     double kf = 0.0;
 
     double errorIntegral = 0.0;
